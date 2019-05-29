@@ -32,14 +32,15 @@
 <div class="col-md-4 col-sm-4">
     <table>
         <tr>
-            <td>Name </td>
-            <td>Website </td>
-            <td>General Information </td>
-            <td>Start Date </td>
-            <td>Abstract Deadline </td>
-            <td>Submission Deadline </td>
-            <td>Presentation Deadline </td>
-            <td>End Date </td>
+            <th>Name </th>
+            <th>Website </th>
+            <th>General Information </th>
+            <th>Start Date </th>
+            <th>Abstract Deadline </th>
+            <th>Submission Deadline </th>
+            <th>Presentation Deadline </th>
+            <th>End Date </th>
+            <th>Enroll As PC Member </th>
         </tr>
         {% for conf in conferences %}
         <tr>
@@ -51,6 +52,7 @@
             <td>{{ conf.submissionDate }}</td>
             <td>{{ conf.presentationDate }}</td>
             <td>{{ conf.endDate }}</td>
+            <td><a href="{% url 'enroll-pcmember' conf.id %}"> Enroll As PC Member </a></td>
         </tr>
         {% endfor %}
     </table>

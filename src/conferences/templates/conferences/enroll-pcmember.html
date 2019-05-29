@@ -1,0 +1,12 @@
+{% extends "conferences/form_base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}{{ block.super }}Enroll As PC Member{% endblock %}
+
+{% block form_heading %}Here You Can Enroll As A PC Member{% endblock %}
+
+{% block form %}
+  {% crispy form %}
+{% endblock form %}
+

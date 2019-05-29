@@ -46,3 +46,15 @@ class SubmitProposal(forms.Form):
             Field("metaInfo", placeholder = "General Information Behind the Paper"),
             Submit("submit_proposal", "Submit your proposal", css_class="btn btn-lg btn-primary btn-block")
         )
+
+class EnrollPcMember(forms.Form):
+    description = forms.CharField(max_length = 1024)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            Field("description", placeholder = "Why would you be a good PC Member?"),
+            Submit("submit_enrollment", "Submit your proposal", css_class="btn btn-lg btn-primary btn-block")
+        )

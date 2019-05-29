@@ -33,6 +33,11 @@ class Submission(models.Model):
     metaInfo = models.CharField(max_length = 10000, null = True)
     submitter = models.ForeignKey(Actor, on_delete = models.CASCADE)
 
+class PcMemberIn(models.Model):
+    description = models.CharField(max_length=1024)
+    actor = models.ForeignKey(Actor, on_delete = models.CASCADE)
+    conference = models.ForeignKey(Conference, on_delete = models.CASCADE)
+
 ################################################################################
 
 def loggedActor(view):

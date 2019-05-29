@@ -43,11 +43,6 @@ class AddConference(FormView, Abstract):
 
         return super().form_valid(form)
 
-# TODO:
-# 1. ~~Add buttons on conferences for submitting proposals.~~
-# 2. ~~Add validation for submissions to not allow the chair to submit.~~
-# 3. Add validation for submission to not allow to submit beyond the submission deadline.
-
 class SubmitProposal(FormView, Abstract):
     template_name = "conferences/submit-proposal.html"
     form_class = forms.SubmitProposal
@@ -56,21 +51,45 @@ class SubmitProposal(FormView, Abstract):
     def form_valid(self, form):
         data = form.cleaned_data
         conf_id = self.kwargs['conference_id']
+        actor = models.loggedActor(self)
+        this_conference = actor.conference_set.get(pk = conf_id)
 
-        this_conference = models.loggedActor(self).conference_set.get(pk = conf_id)
         # if this user is chairing this conference... then they can't submit
         if this_conference is not None:
             return super().form_invalid(form)
 
         # Or if we're beyond the time for submitting abstracts...
-        if this_conference.abstractDate <= datetime.datetime.now():
+        if this_conference.abstractDate <= datetime.date.today():
             return super().form_invalid(form)
 
         models.Submission(
             abstract = data['abstract'],
             fullPaper = data['fullPaper'],
             metaInfo = data['metaInfo'],
-            submitter = models.loggedActor(self)
+            submitter = actor
+        ).save()
+
+        return super().form_valid(form)
+
+class EnrollPcMember(FormView, Abstract):
+    template_name = "conferences/enroll-pcmember.html"
+    form_class = forms.EnrollPcMember
+    success_url = reverse_lazy("conferences")
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        conf_id = self.kwargs['conference_id']
+        actor = models.loggedActor(self)
+        this_conference = actor.conference_set.get(pk = conf_id)
+
+        # if this user is chairing this conference... then they can't submit
+        # if this_conference is not None:
+        #     return super().form_invalid(form)
+
+        models.PcMemberIn(
+            description = data['description'],
+            actor = actor,
+            conference = this_conference
         ).save()
 
         return super().form_valid(form)
