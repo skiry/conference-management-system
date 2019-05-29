@@ -2,7 +2,7 @@
 <html lang="en">
     {% load staticfiles %}
     {% load thumbnail %}
-    
+
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -66,7 +66,7 @@
 			{{ user.get_full_name|truncatechars:20 }}
 			<span class="caret"></span>
 		    </a>
-		    
+
                   <ul class="dropdown-menu" role="menu">
                     <li><a href="{% url 'profiles:show_self' %}">Profile</a></li>
                     <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
@@ -93,37 +93,10 @@
 
     {% block splash %}
     {% endblock splash %}
-    
+
     {% block container %}
-    <div class="container">
-
-      <div class="starter-template">
-        <h1>New Project</h1>
-        <p class="lead">Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.</p>
-      </div>
-
-    </div><!-- /.container -->
     {% endblock container %}
 
-    <!-- Site footer -->
-    {% block footer %}
-      <!-- Some social button for contact will do -->
-      <a id="contact"></a>
-      <div class="container">
-            <div class="footer">
-        <div class="row">
-          <div class="col-lg-6">
-              <p>&copy; Company {% now 'Y' %}</p>
-          </div>
-          <div class="col-lg-6 text-right">
-            Connect with us on
-            <a href="#"><i class="fa fa-facebook"></i> Facebook</a> or
-            <a href="#"><i class="fa fa-twitter"></i> Twitter</a>
-          </div>
-        </div>
-            </div>
-      </div>
-    {% endblock %}
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
@@ -134,5 +107,3 @@
     {% endblock scripts %}
   </body>
 </html>
-
-

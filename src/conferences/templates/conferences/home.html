@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ block.super }}Conferences{% endblock %}
+
+{% block navbar-left %}
+{% include "_navbar.html" with active_link="home" %}
+{% endblock %}
+
+{% block navbar-right %}
+{{ block.super }}
+{% endblock %}
+
+{% block splash %}
+<div class="jumbotron">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-sm-8">
+                <h1>{% include "_brandname.html" %}</h1>
+            </div>
+            <div class="col-md-4 col-sm-4">
+                <li><a href="{% url 'add-conference' %}"> Add a conference</a></li>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock splash %}
+
+{% block container %}
+<div class="col-md-4 col-sm-4">
+    <table>
+        <tr>
+            <td>Name </td>
+            <td>Website </td>
+            <td>General Information </td>
+            <td>Start Date </td>
+            <td>Abstract Deadline </td>
+            <td>Submission Deadline </td>
+            <td>Presentation Deadline </td>
+            <td>End Date </td>
+        </tr>
+        {% for conf in conferences %}
+        <tr>
+            <td>{{ conf.name }}</td>
+            <td>{{ conf.website }}</td>
+            <td>{{ conf.info }}</td>
+            <td>{{ conf.startDate }}</td>
+            <td>{{ conf.abstractDate }}</td>
+            <td>{{ conf.submissionDate }}</td>
+            <td>{{ conf.presentationDate }}</td>
+            <td>{{ conf.endDate }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock container %}
+
+{% block scripts %}
+<script src="{% static 'site/js/site.js' %}"></script>
+{% endblock scripts %}

@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from django.urls import include, path
 import profiles.urls
 import accounts.urls
+import conferences.urls
 from . import views
 
 # Personalized admin site settings like title and header
@@ -13,8 +14,8 @@ admin.site.site_header = "Iss Administration"
 urlpatterns = [
     path("", views.HomePage.as_view(), name="home"),
     path("users/", include(profiles.urls)),
-    path("admin/", admin.site.urls),
-    path("", include(accounts.urls)),
+    path("auth/", include(accounts.urls)),
+    path("conferences/", include(conferences.urls))
 ]
 
 # User-uploaded files like profile pics need to be served in development
