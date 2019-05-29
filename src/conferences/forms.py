@@ -31,3 +31,18 @@ class AddConference(forms.Form):
             Submit("create_conference", "Create new conference", css_class="btn btn-lg btn-primary btn-block"),
         )
 
+class SubmitProposal(forms.Form):
+    abstract = forms.CharField(max_length = 255)
+    fullPaper = forms.CharField(max_length = 25500, required = True)
+    metaInfo = forms.CharField(max_length = 10000, required = True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            Field("abstract", placeholder = "Paper Abstract"),
+            Field("fullPaper", placeholder = "Full Paper"),
+            Field("metaInfo", placeholder = "General Information Behind the Paper"),
+            Submit("submit_proposal", "Submit your proposal", css_class="btn btn-lg btn-primary btn-block")
+        )

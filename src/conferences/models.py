@@ -26,3 +26,15 @@ class Conference(models.Model):
     endDate = models.DateField()
 
     chairedBy = models.ForeignKey(Actor, on_delete = models.CASCADE)
+
+class Submission(models.Model):
+    abstract = models.CharField(max_length = 255)
+    fullPaper = models.CharField(max_length = 25500, null = True)
+    metaInfo = models.CharField(max_length = 10000, null = True)
+    submitter = models.ForeignKey(Actor, on_delete = models.CASCADE)
+
+################################################################################
+
+def loggedActor(view):
+    return Actor.objects.get(pk=view.request.user.id)
+

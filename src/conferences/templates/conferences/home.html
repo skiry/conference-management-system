@@ -43,7 +43,7 @@
         </tr>
         {% for conf in conferences %}
         <tr>
-            <td>{{ conf.name }}</td>
+            <td><a href="{% url 'submit-proposal' conf.id %}">{{ conf.name }}</a></td>
             <td>{{ conf.website }}</td>
             <td>{{ conf.info }}</td>
             <td>{{ conf.startDate }}</td>
