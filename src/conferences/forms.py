@@ -33,8 +33,8 @@ class AddConference(forms.Form):
 
 class SubmitProposal(forms.Form):
     abstract = forms.CharField(max_length = 255)
-    fullPaper = forms.CharField(max_length = 25500, required = True)
-    metaInfo = forms.CharField(max_length = 10000, required = True)
+    fullPaper = forms.CharField(max_length = 25500, required = False)
+    metaInfo = forms.CharField(max_length = 10000, required = False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
