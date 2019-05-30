@@ -32,29 +32,19 @@
 <div class="col-md-4 col-sm-4">
     <table>
         <tr>
-            <th>Name </th>
-            <th>Website </th>
+            <th>Abstract </th>
             <th>General Information </th>
-            <th>Start Date </th>
-            <th>Abstract Deadline </th>
-            <th>Submission Deadline </th>
-            <th>Presentation Deadline </th>
-            <th>End Date </th>
-            <th>Enroll As PC Member </th>
-            <th>See the submissions </th>
+            <th>Full Paper </th>
+            <th>Author </th>
+            <th>See biddings and remarks </th>
         </tr>
-        {% for conf in conferences %}
+        {% for submission in submissions %}
         <tr>
-            <td><a href="{% url 'submit-proposal' conf.id %}">{{ conf.name }}</a></td>
-            <td>{{ conf.website }}</td>
-            <td>{{ conf.info }}</td>
-            <td>{{ conf.startDate }}</td>
-            <td>{{ conf.abstractDate }}</td>
-            <td>{{ conf.submissionDate }}</td>
-            <td>{{ conf.presentationDate }}</td>
-            <td>{{ conf.endDate }}</td>
-            <td><a href="{% url 'enroll-pcmember' conf.id %}"> Enroll As PC Member </a></td>
-            <td><a href="{% url 'submissions' conf.id %}"> See the submissions</a></td>
+            <td>{{ submission.abstract }}</td>
+            <td>{{ submission.metaInfo }}</td>
+            <td>{{ submission.fullPaper }}</td>
+            <td>{{ submission.submitter.user.name }}</td>
+            <td><a href="{% url 'specific-submission' submission.id %}"> See biddings and remarks </a></td>
         </tr>
         {% endfor %}
     </table>

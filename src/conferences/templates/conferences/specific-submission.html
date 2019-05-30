@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ block.super }}Conferences{% endblock %}
+
+{% block navbar-left %}
+{% include "_navbar.html" with active_link="home" %}
+{% endblock %}
+
+{% block navbar-right %}
+{{ block.super }}
+{% endblock %}
+
+{% block splash %}
+<div class="jumbotron">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-sm-8">
+                <h1>{% include "_brandname.html" %}</h1>
+            </div>
+            <div class="col-md-4 col-sm-4">
+                <li><a href="{% url 'add-conference' %}"> Add a conference</a></li>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock splash %}
+
+{% block container %}
+<div class="col-md-4 col-sm-4">
+    <h3> Abstract </h3>
+    <p> {{ submission.abstract }} </p>
+    <h3> Full Paper </h3>
+    <p> {{ submission.fullPaper }} </p>
+    <h3> General Information </h3>
+    <p> {{ submission.metaInfo }} </p>
+    <hr>
+    <table>
+        <tr>
+            <th> Action </th>
+        </tr>
+        <tr>
+            <td><a href="{% url 'bid-submission' submission.id %}"> Bid on this submission</a></td>
+        </tr>
+        <tr>
+            <td><a href="{% url 'comment-submission' submission.id %}"> Comment on this submission</a></td>
+        </tr>
+    </table>
+    <hr>
+    <table>
+        <tr>
+            <th> PC Member Name </th>
+            <th> Bid </th>
+        </tr>
+        {% for bidding in biddings %}
+        <tr>
+            <td>{{ bidding.pcmember.actor.user.name }}</td>
+            <td>{{ bidding.bid }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <table>
+        <tr>
+            <th> PC Member Name </th>
+            <th> Remark </th>
+        </tr>
+        {% for remark in remarks %}
+        <tr>
+            <td>{{ remark.pcmember.actor.user.name }}</td>
+            <td>{{ remark.content }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <hr>
+</div>
+{% endblock container %}
+
+{% block scripts %}
+<script src="{% static 'site/js/site.js' %}"></script>
+{% endblock scripts %}
