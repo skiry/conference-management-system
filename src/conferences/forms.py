@@ -3,6 +3,7 @@ from django import forms
 from django.urls import reverse
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, HTML, Field
+from . import models
 
 class AddConference(forms.Form):
     name = forms.CharField()
@@ -57,4 +58,28 @@ class EnrollPcMember(forms.Form):
         self.helper.layout = Layout(
             Field("description", placeholder = "Why would you be a good PC Member?"),
             Submit("submit_enrollment", "Submit your proposal", css_class="btn btn-lg btn-primary btn-block")
+        )
+
+class BidSubmission(forms.Form):
+    bidding = forms.ChoiceField(choices = models.BiddingValues.CHOICES, required = True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            Field("bidding", placeholder = "What's your bidding on this submission?"),
+            Submit("submit_bidding", "Submit your bid", css_class="btn btn-lg btn-primary btn-block")
+        )
+
+class CommentSubmission(forms.Form):
+    remark = forms.CharField(max_length = 1024)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            Field("remark", placeholder = "What do you have to add?"),
+            Submit("submit_remark", "Submit your remark", css_class="btn btn-lg btn-primary btn-block")
         )

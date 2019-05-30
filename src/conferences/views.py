@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from braces import views as bracesviews
 from django import forms as django_forms
+from django.shortcuts import render
 from django.views import generic
 from django.views.generic import FormView
 from django.urls import reverse_lazy
@@ -27,7 +28,6 @@ class AddConference(FormView, Abstract):
 
     def form_valid(self, form):
         data = form.cleaned_data
-        _id = self.request.user.id
 
         models.Conference(
             name = data['name'],
@@ -52,15 +52,15 @@ class SubmitProposal(FormView, Abstract):
         data = form.cleaned_data
         conf_id = self.kwargs['conference_id']
         actor = models.loggedActor(self)
-        actors_conference = actor.conference_set.get(pk = conf_id)
-        this_conference = models.Conference.objects.get(pk = conf_id)
+        actors_conference = actor.conference_set.filter(id = conf_id).first()
+        this_conference = models.Conference.objects.filter(id = conf_id).first()
 
         # if this conference does not exist.
         if this_conference is None:
             return super().form_invalid(form)
 
         # if this user is chairing this conference... then they can't submit
-        if this_conference is not None:
+        if actors_conference is not None:
             return super().form_invalid(form)
 
         # Or if we're beyond the time for submitting abstracts...
@@ -71,14 +71,11 @@ class SubmitProposal(FormView, Abstract):
             abstract = data['abstract'],
             fullPaper = data['fullPaper'],
             metaInfo = data['metaInfo'],
-            submitter = actor
+            submitter = actor,
+            conference = this_conference
         ).save()
 
         return super().form_valid(form)
-
-# TODO:
-# 1 - disallow double pc member enrolling.
-# 2 - try to highlight the conferences where one is enrolled as pc member.
 
 class EnrollPcMember(FormView, Abstract):
     template_name = "conferences/enroll-pcmember.html"
@@ -89,8 +86,8 @@ class EnrollPcMember(FormView, Abstract):
         data = form.cleaned_data
         conf_id = self.kwargs['conference_id']
         actor = models.loggedActor(self)
-        actors_conference = actor.conference_set.get(pk = conf_id)
-        this_conference = models.Conference.objects.get(pk = conf_id)
+        actors_conference = actor.conference_set.filter(id = conf_id).first()
+        this_conference = models.Conference.objects.filter(id = conf_id).first()
 
         # if this conference does not exist...
         if this_conference is None:
@@ -101,13 +98,119 @@ class EnrollPcMember(FormView, Abstract):
             return super().form_invalid(form)
 
         # if this user is already a pc member in this conference... then he can't submit
-        if this_conference.pcmemberin_set.filter(actor_id = actor.id) is not None:
+        if this_conference.pcmemberin_set.filter(actor_id = actor.id).first() is not None:
             return super().form_invalid(form)
 
         models.PcMemberIn(
             description = data['description'],
             actor = actor,
             conference = this_conference
+        ).save()
+
+        return super().form_valid(form)
+
+class Submissions(Abstract):
+    template_name = "conferences/submissions.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(Abstract, self).get_context_data(**kwargs)
+        context['submissions'] = models.Submission.objects.filter(conference_id = self.kwargs['conference_id'])
+        return context
+
+class SpecificSubmission(Abstract):
+    template_name = "conferences/specific-submission.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        submission = models.Submission.objects.filter(id = self.kwargs['submission_id']).first()
+        actor = models.loggedActor(self)
+
+        # if submission doesn't exist...
+        if submission is None:
+            return reverse_lazy("conferences")
+
+        # if the actor isn't a pc member for this conference...
+        if actor.pcmemberin_set.filter(conference_id = submission.conference.id).first() is None:
+            return reverse_lazy("conferences")
+
+        return render(request, SpecificSubmission.template_name, self.get_context_data(**kwargs))
+
+    def get_context_data(self, **kwargs):
+        context = super(Abstract, self).get_context_data(**kwargs)
+
+        submission = models.Submission.objects.get(pk = self.kwargs['submission_id'])
+        biddings = list(submission.bidding_set.all())
+
+        for x in biddings:
+            x.bid = x.getBid()
+
+        context['submission'] = submission
+        context['biddings'] = biddings
+        context['remarks'] = list(submission.submissionremark_set.all())
+        return context
+
+class BidSubmission(FormView, Abstract):
+    template_name = "conferences/bid-submission.html"
+    form_class = forms.BidSubmission
+    success_url = reverse_lazy("conferences")
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        submission_id = self.kwargs['submission_id']
+
+        actor = models.loggedActor(self)
+        this_submission = models.Submission.objects.filter(id = submission_id).first()
+
+        # if this conference does not exist.
+        if this_submission is None:
+            return super().form_invalid(form)
+
+        this_conference = this_submission.conference
+        pcmemberin = this_conference.pcmemberin_set.filter(actor_id = actor.id).first()
+
+        # if this actor is not a pc member in this conference...
+        if pcmemberin is None:
+            return super().form_invalid(form)
+
+        # if this actor has already bid on this submission...
+        if models.SubmissionRemark.objects.filter(submission_id = this_submission.id).filter(pcmember_id = pcmemberin.id).first() is not None:
+            return super().form_invalid(form)
+
+        models.Bidding(
+            submission = this_submission,
+            pcmember = pcmemberin,
+            bid = data['bidding']
+        ).save()
+
+        return super().form_valid(form)
+
+
+class CommentSubmission(FormView, Abstract):
+    template_name = "conferences/comment-submission.html"
+    form_class = forms.CommentSubmission
+    success_url = reverse_lazy("conferences")
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        submission_id = self.kwargs['submission_id']
+
+        actor = models.loggedActor(self)
+        this_submission = models.Submission.objects.filter(id = submission_id).first()
+
+        # if this conference does not exist.
+        if this_submission is None:
+            return super().form_invalid(form)
+
+        this_conference = this_submission.conference
+        pcmemberin = this_conference.pcmemberin_set.filter(actor_id = actor.id).first()
+
+        # if this actor is not a pc member in this conference...
+        if pcmemberin is None:
+            return super().form_invalid(form)
+
+        models.SubmissionRemark(
+            submission = this_submission,
+            pcmember = pcmemberin,
+            content = data['remark']
         ).save()
 
         return super().form_valid(form)

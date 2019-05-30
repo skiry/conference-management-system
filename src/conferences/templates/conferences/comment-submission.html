@@ -1,0 +1,12 @@
+{% extends "conferences/form_base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}{{ block.super }}Add Submission Remark{% endblock %}
+
+{% block form_heading %}Here you can add any remark you have regarding this submission{% endblock %}
+
+{% block form %}
+  {% crispy form %}
+{% endblock form %}
+
