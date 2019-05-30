@@ -214,3 +214,41 @@ class CommentSubmission(FormView, Abstract):
         ).save()
 
         return super().form_valid(form)
+
+# TODO:
+# 1 - pass through the context all the names of all the submissions
+#   - that is to put them in the headers
+# 2 - in the same order, for each member, have its bidding result shown
+# 3 - make the bidding result clickable - clicking it means assign to pc member x submission y for review.
+# ordering the submissions by the id should do it.
+
+class PcMembersPanel(Abstract):
+    template_name = "conferences/pc-members-panel.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        actor = models.loggedActor(self)
+        conf_id = self.kwargs['conference_id']
+        this_conference = models.Conference.objects.filter(id = conf_id).first()
+
+        # if this conference does not exist.
+        if this_conference is None:
+            return reverse_lazy("conferences")
+
+        # if this user is not the chair...
+        if actor.conference_set.filter(id = conf_id).first() is None:
+            return reverse_lazy("conferences")
+
+        return render(request, PcMembersPanel.template_name, self.get_context_data(**kwargs))
+
+    def get_context_data(self, **kwargs):
+        context = super(Abstract, self).get_context_data(**kwargs)
+
+        actor = models.loggedActor(self)
+        conf_id = self.kwargs['conference_id']
+        this_conference = models.Conference.objects.filter(id = conf_id).first()
+
+        context['members'] = this_conference.pcmemberin_set.all()
+        context['conf'] = this_conference
+        context['submissions'] = this_conference.submission_set.all()
+
+        return context

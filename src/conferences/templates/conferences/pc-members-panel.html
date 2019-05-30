@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ block.super }}PC Members for conference {{ conf.name }} {% endblock %}
+
+{% block navbar-left %}
+{% include "_navbar.html" with active_link="home" %}
+{% endblock %}
+
+{% block navbar-right %}
+{{ block.super }}
+{% endblock %}
+
+{% block splash %}
+<div class="jumbotron">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-sm-8">
+                <h1>{% include "_brandname.html" %}</h1>
+            </div>
+            <div class="col-md-4 col-sm-4">
+                <li><a href="{% url 'add-conference' %}"> Add a conference</a></li>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock splash %}
+
+{% block container %}
+<div class="col-md-4 col-sm-4">
+    <table>
+        <tr>
+            <th>Name </th>
+            <th>Motivation </th>
+            <th>Email </th>
+        </tr>
+        {% for member in members %}
+        <tr>
+            <td>{{ member.actor.user.name }}</td>
+            <td>{{ member.description }}</td>
+            <td>{{ member.actor.user.email }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock container %}
+
+{% block scripts %}
+<script src="{% static 'site/js/site.js' %}"></script>
+{% endblock scripts %}
