@@ -52,7 +52,12 @@ class SubmitProposal(FormView, Abstract):
         data = form.cleaned_data
         conf_id = self.kwargs['conference_id']
         actor = models.loggedActor(self)
-        this_conference = actor.conference_set.get(pk = conf_id)
+        actors_conference = actor.conference_set.get(pk = conf_id)
+        this_conference = models.Conference.objects.get(pk = conf_id)
+
+        # if this conference does not exist.
+        if this_conference is None:
+            return super().form_invalid(form)
 
         # if this user is chairing this conference... then they can't submit
         if this_conference is not None:
@@ -71,6 +76,10 @@ class SubmitProposal(FormView, Abstract):
 
         return super().form_valid(form)
 
+# TODO:
+# 1 - disallow double pc member enrolling.
+# 2 - try to highlight the conferences where one is enrolled as pc member.
+
 class EnrollPcMember(FormView, Abstract):
     template_name = "conferences/enroll-pcmember.html"
     form_class = forms.EnrollPcMember
@@ -80,11 +89,20 @@ class EnrollPcMember(FormView, Abstract):
         data = form.cleaned_data
         conf_id = self.kwargs['conference_id']
         actor = models.loggedActor(self)
-        this_conference = actor.conference_set.get(pk = conf_id)
+        actors_conference = actor.conference_set.get(pk = conf_id)
+        this_conference = models.Conference.objects.get(pk = conf_id)
+
+        # if this conference does not exist...
+        if this_conference is None:
+            return super().form_invalid(form)
 
         # if this user is chairing this conference... then they can't submit
-        # if this_conference is not None:
-        #     return super().form_invalid(form)
+        if actors_conference is not None:
+            return super().form_invalid(form)
+
+        # if this user is already a pc member in this conference... then he can't submit
+        if this_conference.pcmemberin_set.filter(actor_id = actor.id) is not None:
+            return super().form_invalid(form)
 
         models.PcMemberIn(
             description = data['description'],
