@@ -32,6 +32,9 @@ local.env
 .pydevproject
 .settings
 
+#Intellij
+.idea/
+
 # Linux Editors
 *~
 \#*\#
