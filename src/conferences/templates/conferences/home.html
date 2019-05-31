@@ -47,6 +47,7 @@
                 <th>See the submissions </th>
                 <th>See the PC Members</th>
                 <th>See pending reviews</th>
+                <th>Postpone deadlines</th>
             </tr>
         {% for conf in conferences %}
         <tr class="even">
@@ -62,6 +63,7 @@
                 <td><a href="{% url 'submissions' conf.id %}"> See the submissions</a></td>
                 <td><a href="{% url 'pc-members-panel' conf.id %}"> See the PC Members</a></td>
                 <td><a href="{% url 'reviewer-board' conf.id %}"> See pending reviews</a></td>
+                <td><a href="{% url 'postpone-deadlines' conf.id %}"> Postpone Deadlines</a></td>
             </tr>
         {% endfor %}
     </table>
