@@ -30,6 +30,8 @@
 
 {% block container %}
 <div class="col-md-4 col-sm-4">
+    <h3> Title </h3>
+    <p> {{ submission.title }} </p>
     <h3> Abstract </h3>
     <p> {{ submission.abstract }} </p>
     <h3> Full Paper </h3>
@@ -74,6 +76,18 @@
         {% endfor %}
     </table>
     <hr>
+    <table class="table table-hover">
+        <tr>
+            <th> PC Member Name </th>
+            <th> Evaluation Grade </th>
+        </tr>
+        {% for grade in grades %}
+        <tr>
+            <td>{{ grade.pcmember.actor.user.name }}</td>
+            <td>{{ grade.grade }}</td>
+        </tr>
+        {% endfor %}
+    </table>
 </div>
 {% endblock container %}
 

@@ -43,6 +43,7 @@
             <th>Enroll As PC Member </th>
             <th>See the submissions </th>
             <th>See the PC Members </th>
+            <th>See Pending Reviews </th>
         </tr>
         {% for conf in conferences %}
         <tr>
@@ -57,6 +58,7 @@
             <td><a href="{% url 'enroll-pcmember' conf.id %}"> Enroll As PC Member </a></td>
             <td><a href="{% url 'submissions' conf.id %}"> See the submissions</a></td>
             <td><a href="{% url 'pc-members-panel' conf.id %}"> See the PC Members</a></td>
+            <td><a href="{% url 'reviewer-board' conf.id %}"> See Pending Reviews</a></td>
         </tr>
         {% endfor %}
     </table>

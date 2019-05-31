@@ -108,6 +108,11 @@ class ReviewAssignment(models.Model):
     pcmember = models.ForeignKey(PcMemberIn, on_delete = models.CASCADE)
     grade = models.PositiveSmallIntegerField(default = 1, choices = GradingValues.CHOICES)
 
+    def getGrade(self):
+        for x in GradingValues.CHOICES:
+            if self.grade == x[0]:
+                return x[1]
+
 ################################################################################
 
 def loggedActor(view):

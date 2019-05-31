@@ -33,7 +33,8 @@ class AddConference(forms.Form):
         )
 
 class SubmitProposal(forms.Form):
-    abstract = forms.CharField(max_length = 255)
+    title = forms.CharField(max_length = 128)
+    abstract = forms.CharField(max_length = 2550)
     fullPaper = forms.CharField(max_length = 25500, required = False)
     metaInfo = forms.CharField(max_length = 10000, required = False)
 
@@ -42,6 +43,7 @@ class SubmitProposal(forms.Form):
         self.helper = FormHelper()
 
         self.helper.layout = Layout(
+            Field("title", placeholder = "Paper Title"),
             Field("abstract", placeholder = "Paper Abstract"),
             Field("fullPaper", placeholder = "Full Paper"),
             Field("metaInfo", placeholder = "General Information Behind the Paper"),
