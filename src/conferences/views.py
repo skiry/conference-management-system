@@ -44,10 +44,53 @@ class AddConference(FormView, Abstract):
 
         return super().form_valid(form)
 
+
+class PostponeDeadlines(FormView, Abstract):
+    template_name = "conferences/postpone-deadlines.html"
+    form_class = forms.PostponeDeadlines
+    success_url = reverse_lazy("conferences")
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        conf_id = self.kwargs['conference_id']
+        actor = models.loggedActor(self)
+        actors_conference = actor.conference_set.filter(id = conf_id).first()
+        this_conference = models.Conference.objects.get(id=conf_id)
+
+        # if this conference does not exist.
+        if this_conference is None:
+            return super().form_invalid(form)
+
+        # if this user is not chairing this conference... then he can't postpone deadlines
+        if actors_conference is None:
+            return super().form_invalid(form)
+
+        if this_conference.abstract_date >= data['abstract_date']:
+            return super().form_invalid(form)
+
+        if this_conference.submission_date >= data['submission_date']:
+            return super().form_invalid(form)
+
+        if this_conference.presentation_date >= data['presentation_date']:
+            return super().form_invalid(form)
+
+        if this_conference.end_date >= data['end_date']:
+            return super().form_invalid(form)
+
+        this_conference.abstract_date = data['abstract_date']
+        this_conference.submission_date = data['submission_date']
+        this_conference.presentation_date = data['presentation_date']
+        this_conference.end_date = data['end_date']
+
+        this_conference.save()
+
+        return super().form_valid(form)
+
 class SubmitProposal(FormView, Abstract):
     template_name = "conferences/submit-proposal.html"
     form_class = forms.SubmitProposal
     success_url = reverse_lazy("conferences")
+
 
     def form_valid(self, form):
         data = form.cleaned_data

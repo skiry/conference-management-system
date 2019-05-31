@@ -32,6 +32,24 @@ class AddConference(forms.Form):
             Submit("create_conference", "Create new conference", css_class="btn btn-lg btn-primary btn-block"),
         )
 
+class PostponeDeadlines(forms.Form):
+    abstract_date = forms.DateField()
+    submission_date = forms.DateField()
+    presentation_date = forms.DateField()
+    end_date = forms.DateField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            Field("abstract_date", placeholder="Abstract Deadline Date"),
+            Field("submission_date", placeholder="Submission Deadline Date"),
+            Field("presentation_date", placeholder="Presentation Deadline Date"),
+            Field("end_date", placeholder = "Ending Date"),
+            Submit("update_conference", "Update conference", css_class="btn btn-lg btn-primary btn-block"),
+        )
+
 class SubmitProposal(forms.Form):
     title = forms.CharField(max_length = 128)
     abstract = forms.CharField(max_length = 2550)
