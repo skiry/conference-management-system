@@ -10,11 +10,11 @@ class AddConference(forms.Form):
     website = forms.CharField()
     info = forms.CharField()
 
-    startDate = forms.DateField()
-    abstractDate = forms.DateField()
-    submissionDate = forms.DateField()
-    presentationDate = forms.DateField()
-    endDate = forms.DateField()
+    start_date = forms.DateField()
+    abstract_date = forms.DateField()
+    submission_date = forms.DateField()
+    presentation_date = forms.DateField()
+    end_date = forms.DateField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -24,19 +24,19 @@ class AddConference(forms.Form):
             Field("name", placeholder = "Name"),
             Field("website", placeholder = "Website"),
             Field("info", placeholder = "Information"),
-            Field("startDate", placeholder = "Starting Date"),
-            Field("abstractDate", placeholder = "Abstract Deadline Date"),
-            Field("submissionDate", placeholder = "Submission Deadline Date"),
-            Field("presentationDate", placeholder = "Presentation Deadline Date"),
-            Field("endDate", placeholder = "Ending Date"),
+            Field("start_date", placeholder="Starting Date"),
+            Field("abstract_date", placeholder="Abstract Deadline Date"),
+            Field("submission_date", placeholder="Submission Deadline Date"),
+            Field("presentation_date", placeholder="Presentation Deadline Date"),
+            Field("end_date", placeholder = "Ending Date"),
             Submit("create_conference", "Create new conference", css_class="btn btn-lg btn-primary btn-block"),
         )
 
 class SubmitProposal(forms.Form):
     title = forms.CharField(max_length = 128)
     abstract = forms.CharField(max_length = 2550)
-    fullPaper = forms.CharField(max_length = 25500, required = False)
-    metaInfo = forms.CharField(max_length = 10000, required = False)
+    full_paper = forms.CharField(max_length=25500, required=False)
+    meta_info = forms.CharField(max_length=10000, required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,8 +45,8 @@ class SubmitProposal(forms.Form):
         self.helper.layout = Layout(
             Field("title", placeholder = "Paper Title"),
             Field("abstract", placeholder = "Paper Abstract"),
-            Field("fullPaper", placeholder = "Full Paper"),
-            Field("metaInfo", placeholder = "General Information Behind the Paper"),
+            Field("full_paper", placeholder="Full Paper"),
+            Field("meta_info", placeholder="General Information Behind the Paper"),
             Submit("submit_proposal", "Submit your proposal", css_class="btn btn-lg btn-primary btn-block")
         )
 

@@ -16,8 +16,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('abstract', models.CharField(max_length=255)),
-                ('fullPaper', models.CharField(max_length=25500)),
-                ('metaInfo', models.CharField(max_length=10000)),
+                ('full_paper', models.CharField(max_length=25500)),
+                ('meta_info', models.CharField(max_length=10000)),
                 ('submitter', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='conferences.Actor')),
             ],
         ),

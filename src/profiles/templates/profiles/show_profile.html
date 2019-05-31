@@ -4,7 +4,9 @@
 {% load thumbnail %}
 
 {% block title %}{{ block.super }}Profile{% endblock %}
-
+{% block navbar-left %}
+{% include "_navbar.html" with active_link="home" %}
+{% endblock %}
 {% block container %}
 
 <div class="container profile-head">
