@@ -118,6 +118,11 @@ class EvaluationResult(models.Model):
     grade = models.PositiveSmallIntegerField(default = 1, choices = GradingValues.CHOICES)
     submission = models.OneToOneField(Submission, on_delete = models.CASCADE)
 
+    def getGrade(self):
+        for x in GradingValues.CHOICES:
+            if self.grade == x[0]:
+                return x[1]
+
 ################################################################################
 
 def loggedActor(view):

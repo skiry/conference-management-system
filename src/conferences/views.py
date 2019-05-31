@@ -428,41 +428,34 @@ class GradeSubmission(Abstract):
 class Evaluation(Abstract):
     def dispatch(self, request, *args, **kwargs):
         actor = models.loggedActor(self)
-        _submission = models.Submission.objects.filter( id = self.kwargs['submission_id'] ).first()
-        _pcmember = models.PcMemberIn.objects.filter(id = self.kwargs['pcmember_id']).first()
+        conference = models.Conference.objects.filter( id = self.kwargs['conference_id'] ).first()
 
-        # If the ids are bad.
-        if _submission is None or _pcmember is None:
+        # if there's no such conference...
+        if conference is None:
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
-        # if the pcmember is the chair
-        if _pcmember.conference.chairedBy.id == _pcmember.actor.id:
+        # if the current user isn't the chair...
+        if conference.chairedBy.id != actor.id:
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
-        # if the currently logged user is not the chair where the submission was made...
-        if _submission.conference.chairedBy.id != actor.id:
+        # if the conference was already evaluated...
+        if conference.evaluated:
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
-        # if the pcmember submitter this paper
-        if _submission.submitter.id == _pcmember.actor.id:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
+        submissions = conference.submission_set.all()
+        for submission in submissions:
+            for review in submission.reviewassignment_set.all():
+                if review.grade == models.GradingValues.DEFAULT:
+                    return HttpResponseRedirect(reverse_lazy("conferences"))
 
-        # if the pcmember is not a member in this conference...
-        if _pcmember.conference.id != _submission.conference.id:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
+        for s in submissions:
+            finalGrade = int(sum(list(map(lambda x: x.grade, list(s.reviewassignment_set.all())))))
+            models.EvaluationResult(submission = s, grade = finalGrade).save()
 
-        # if the pcmember has already been assigned for reviewing the submission...
-        if _pcmember.reviewassignment_set.filter(pcmember_id = _pcmember.id).filter(submission_id = _submission.id).first() is not None:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
-
-        models.ReviewAssignment(
-            submission = _submission,
-            pcmember = _pcmember,
-            grade = models.GradingValues.DEFAULT
-        ).save()
+        conference.evaluated = True
+        conference.save()
 
         return HttpResponseRedirect(reverse_lazy("conferences"))
-
 
 class EvaluationResult(Abstract):
     template_name = "conferences/evaluation-result.html"
@@ -481,7 +474,12 @@ class EvaluationResult(Abstract):
         conference = models.Conference.objects.filter(id = self.kwargs['conference_id']).first()
 
         if conference.evaluated:
-            context['evaluations'] = list(map(lambda x: x.evaluationresult, conference.submission_set.all()))
+            evaluations = list(map(lambda x: x.evaluationresult, conference.submission_set.all()))
+
+            for x in evaluations:
+                x.grade = x.getGrade()
+
+            context['evaluations'] = evaluations
         else:
             context['error'] = True
             context['evaluations'] = []
