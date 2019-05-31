@@ -424,3 +424,66 @@ class GradeSubmission(Abstract):
         reviewAssignment.save()
 
         return HttpResponseRedirect(reverse_lazy("conferences"))
+
+class Evaluation(Abstract):
+    def dispatch(self, request, *args, **kwargs):
+        actor = models.loggedActor(self)
+        _submission = models.Submission.objects.filter( id = self.kwargs['submission_id'] ).first()
+        _pcmember = models.PcMemberIn.objects.filter(id = self.kwargs['pcmember_id']).first()
+
+        # If the ids are bad.
+        if _submission is None or _pcmember is None:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        # if the pcmember is the chair
+        if _pcmember.conference.chairedBy.id == _pcmember.actor.id:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        # if the currently logged user is not the chair where the submission was made...
+        if _submission.conference.chairedBy.id != actor.id:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        # if the pcmember submitter this paper
+        if _submission.submitter.id == _pcmember.actor.id:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        # if the pcmember is not a member in this conference...
+        if _pcmember.conference.id != _submission.conference.id:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        # if the pcmember has already been assigned for reviewing the submission...
+        if _pcmember.reviewassignment_set.filter(pcmember_id = _pcmember.id).filter(submission_id = _submission.id).first() is not None:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        models.ReviewAssignment(
+            submission = _submission,
+            pcmember = _pcmember,
+            grade = models.GradingValues.DEFAULT
+        ).save()
+
+        return HttpResponseRedirect(reverse_lazy("conferences"))
+
+
+class EvaluationResult(Abstract):
+    template_name = "conferences/evaluation-result.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        conference = models.Conference.objects.filter(id = self.kwargs['conference_id']).first()
+
+        # if submission doesn't exist...
+        if conference is None:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        return render(request, EvaluationResult.template_name, self.get_context_data(**kwargs))
+
+    def get_context_data(self, **kwargs):
+        context = super(Abstract, self).get_context_data(**kwargs)
+        conference = models.Conference.objects.filter(id = self.kwargs['conference_id']).first()
+
+        if conference.evaluated:
+            context['evaluations'] = list(map(lambda x: x.evaluationresult, conference.submission_set.all()))
+        else:
+            context['error'] = True
+            context['evaluations'] = []
+
+        return context
