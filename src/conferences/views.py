@@ -69,6 +69,7 @@ class SubmitProposal(FormView, Abstract):
             return super().form_invalid(form)
 
         models.Submission(
+            title = data['title'],
             abstract = data['abstract'],
             fullPaper = data['fullPaper'],
             metaInfo = data['metaInfo'],
@@ -144,9 +145,14 @@ class SpecificSubmission(Abstract):
         for x in biddings:
             x.bid = x.getBid()
 
+        grades = list(submission.reviewassignment_set.all())
+        for x in grades:
+            x.grade = x.getGrade()
+
         context['submission'] = submission
         context['biddings'] = biddings
         context['remarks'] = list(submission.submissionremark_set.all())
+        context['grades'] = grades
         return context
 
 class BidSubmission(FormView, Abstract):
@@ -255,8 +261,6 @@ class PcMembersPanel(Abstract):
         return context
 
 class AssignPcMember(Abstract):
-    template_name = ""
-
     def dispatch(self, request, *args, **kwargs):
         actor = models.loggedActor(self)
         _submission = models.Submission.objects.filter( id = self.kwargs['submission_id'] ).first()
@@ -274,7 +278,8 @@ class AssignPcMember(Abstract):
         if _pcmember.conference.id != _submission.conference.id:
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
-        if _pcmember.reviewassignment_set.filter(pcmember_id = _pcmember.id).filter(submission_id = _submission.id).first():
+        # if the pcmember has already been assigned for reviewing the submission...
+        if _pcmember.reviewassignment_set.filter(pcmember_id = _pcmember.id).filter(submission_id = _submission.id).first() is not None:
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
         models.ReviewAssignment(
@@ -283,4 +288,67 @@ class AssignPcMember(Abstract):
             grade = models.GradingValues.DEFAULT
         ).save()
 
-        return reverse_lazy("conferences")
+        return HttpResponseRedirect(reverse_lazy("conferences"))
+
+class ReviewerBoard(Abstract):
+    template_name = "conferences/reviewer-board.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        actor = models.loggedActor(self)
+        conference = models.Conference.objects.filter(id = self.kwargs['conference_id']).first()
+
+        # if the conference does not exist
+        if conference is None:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        # if the actor is not a pc member for the conference...
+        if actor.pcmemberin_set.filter(conference_id = conference.id).first() is None:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        return render(request, ReviewerBoard.template_name, self.get_context_data(**kwargs))
+
+    def get_context_data(self, **kwargs):
+        context = super(Abstract, self).get_context_data(**kwargs)
+
+        actor = models.loggedActor(self)
+        conference = models.Conference.objects.filter(id = self.kwargs['conference_id']).first()
+        pcmemberin = actor.pcmemberin_set.filter(conference_id = conference.id).first()
+
+        assignments = pcmemberin.reviewassignment_set.all()
+
+        submissions = list(map(lambda x: x.submission, assignments))
+
+        context['submissions'] = submissions
+        context['grades'] = models.GradingValues.CHOICES[1:]
+
+        return context
+
+class GradeSubmission(Abstract):
+    def dispatch(self, request, *args, **kwargs):
+        actor = models.loggedActor(self)
+        grades = models.GradingValues.CHOICES
+        grade_index = self.kwargs['grade_index']
+
+        if grade_index < 1 or grade_index >= len(grades):
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        _submission = models.Submission.objects.filter( id = self.kwargs['submission_id'] ).first()
+
+        # If the submission is bad.
+        if _submission is None:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        _pcmember = _submission.conference.pcmemberin_set.filter(actor_id = actor.id).first()
+        # if the pcmember is bad...
+        if _pcmember is None:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        reviewAssignment = _pcmember.reviewassignment_set.filter(submission_id = _submission.id).first()
+        # if this pc member has not been assigned this submssion...
+        if reviewAssignment is None:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        reviewAssignment.grade = grade_index
+        reviewAssignment.save()
+
+        return HttpResponseRedirect(reverse_lazy("conferences"))
