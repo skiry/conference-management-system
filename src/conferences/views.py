@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.views import generic
 from django.views.generic import FormView
 from django.urls import reverse_lazy
+from django.http import HttpResponseRedirect
 import datetime
 
 from . import forms
@@ -126,11 +127,11 @@ class SpecificSubmission(Abstract):
 
         # if submission doesn't exist...
         if submission is None:
-            return reverse_lazy("conferences")
+            return HttpResponseRedirect(reverse_lazy("conferences"))
 
         # if the actor isn't a pc member for this conference...
         if actor.pcmemberin_set.filter(conference_id = submission.conference.id).first() is None:
-            return reverse_lazy("conferences")
+            return HttpResponseRedirect(reverse_lazy("conferences"))
 
         return render(request, SpecificSubmission.template_name, self.get_context_data(**kwargs))
 
@@ -214,3 +215,72 @@ class CommentSubmission(FormView, Abstract):
         ).save()
 
         return super().form_valid(form)
+
+class PcMembersPanel(Abstract):
+    template_name = "conferences/pc-members-panel.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        actor = models.loggedActor(self)
+        conf_id = self.kwargs['conference_id']
+        this_conference = models.Conference.objects.filter(id = conf_id).first()
+
+        # if this conference does not exist.
+        if this_conference is None:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        # if this user is not the chair...
+        if this_conference.chairedBy.id != actor.id:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        return render(request, PcMembersPanel.template_name, self.get_context_data(**kwargs))
+
+    def get_context_data(self, **kwargs):
+        context = super(Abstract, self).get_context_data(**kwargs)
+
+        actor = models.loggedActor(self)
+        conf_id = self.kwargs['conference_id']
+        this_conference = models.Conference.objects.filter(id = conf_id).first()
+
+        context['conf'] = this_conference
+
+        submissions = this_conference.submission_set.all()
+        members = this_conference.pcmemberin_set.all()
+
+        for member in members:
+            member.opinions = list(map(lambda x: {'id': x.id, 'value': member.biddingValueFor(x.id)}, submissions))
+
+        context['submissions'] = submissions
+        context['members'] = members
+
+        return context
+
+class AssignPcMember(Abstract):
+    template_name = ""
+
+    def dispatch(self, request, *args, **kwargs):
+        actor = models.loggedActor(self)
+        _submission = models.Submission.objects.filter( id = self.kwargs['submission_id'] ).first()
+        _pcmember = models.PcMemberIn.objects.filter(id = self.kwargs['pcmember_id']).first()
+
+        # If the ids are bad.
+        if _submission is None or _pcmember is None:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        # if the currently logged user is not the chair where the submission was made...
+        if _submission.conference.chairedBy.id != actor.id:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        # if the pcmember is not a member in this conference...
+        if _pcmember.conference.id != _submission.conference.id:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        if _pcmember.reviewassignment_set.filter(pcmember_id = _pcmember.id).filter(submission_id = _submission.id).first():
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        models.ReviewAssignment(
+            submission = _submission,
+            pcmember = _pcmember,
+            grade = models.GradingValues.DEFAULT
+        ).save()
+
+        return reverse_lazy("conferences")

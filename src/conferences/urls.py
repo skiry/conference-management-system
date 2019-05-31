@@ -10,4 +10,6 @@ urlpatterns = [
     path("submissions/<int:submission_id>", views.SpecificSubmission.as_view(), name='specific-submission'),
     path("submissions/<int:submission_id>/bid", views.BidSubmission.as_view(), name='bid-submission'),
     path("submissions/<int:submission_id>/comment", views.CommentSubmission.as_view(), name='comment-submission'),
+    path("<int:conference_id>/pc-members", views.PcMembersPanel.as_view(), name="pc-members-panel"),
+    path("assign/<int:submission_id>/to/<int:pcmember_id>", views.AssignPcMember.as_view(), name="assign-reviewer")
 ]

@@ -3,7 +3,7 @@
 {% load staticfiles %}
 {% load crispy_forms_tags %}
 
-{% block title %}{{ block.super }}Conferences{% endblock %}
+{% block title %}{{ block.super }}PC Members for conference {{ conf.name }} {% endblock %}
 
 {% block navbar-left %}
 {% include "_navbar.html" with active_link="home" %}
@@ -32,19 +32,25 @@
 <div class="col-md-4 col-sm-4">
     <table class="table table-hover">
         <tr>
-            <th>Abstract </th>
-            <th>General Information </th>
-            <th>Full Paper </th>
-            <th>Author </th>
-            <th>See biddings and remarks </th>
+            <th>Name </th>
+            <th>Motivation </th>
+            <th>Email </th>
+            {% for submission in submissions %}
+            <th>
+                {{ submission.title }}
+            </th>
+            {% endfor %}
         </tr>
-        {% for submission in submissions %}
+        {% for member in members %}
         <tr>
-            <td>{{ submission.abstract }}</td>
-            <td>{{ submission.metaInfo }}</td>
-            <td>{{ submission.fullPaper }}</td>
-            <td>{{ submission.submitter.user.name }}</td>
-            <td><a href="{% url 'specific-submission' submission.id %}"> See biddings and remarks </a></td>
+            <td>{{ member.actor.user.name }}</td>
+            <td>{{ member.description }}</td>
+            <td>{{ member.actor.user.email }}</td>
+            {% for opinion in member.opinions %}
+            <td><a href="{% url 'assign-reviewer' opinion.id member.id %}">
+                {{ opinion.value }}
+            </a></td>
+            {% endfor %}
         </tr>
         {% endfor %}
     </table>
