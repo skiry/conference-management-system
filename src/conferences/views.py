@@ -424,3 +424,64 @@ class GradeSubmission(Abstract):
         reviewAssignment.save()
 
         return HttpResponseRedirect(reverse_lazy("conferences"))
+
+class Evaluation(Abstract):
+    def dispatch(self, request, *args, **kwargs):
+        actor = models.loggedActor(self)
+        conference = models.Conference.objects.filter( id = self.kwargs['conference_id'] ).first()
+
+        # if there's no such conference...
+        if conference is None:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        # if the current user isn't the chair...
+        if conference.chairedBy.id != actor.id:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        # if the conference was already evaluated...
+        if conference.evaluated:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        submissions = conference.submission_set.all()
+        for submission in submissions:
+            for review in submission.reviewassignment_set.all():
+                if review.grade == models.GradingValues.DEFAULT:
+                    return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        for s in submissions:
+            finalGrade = int(sum(list(map(lambda x: x.grade, list(s.reviewassignment_set.all())))))
+            models.EvaluationResult(submission = s, grade = finalGrade).save()
+
+        conference.evaluated = True
+        conference.save()
+
+        return HttpResponseRedirect(reverse_lazy("conferences"))
+
+class EvaluationResult(Abstract):
+    template_name = "conferences/evaluation-result.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        conference = models.Conference.objects.filter(id = self.kwargs['conference_id']).first()
+
+        # if submission doesn't exist...
+        if conference is None:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        return render(request, EvaluationResult.template_name, self.get_context_data(**kwargs))
+
+    def get_context_data(self, **kwargs):
+        context = super(Abstract, self).get_context_data(**kwargs)
+        conference = models.Conference.objects.filter(id = self.kwargs['conference_id']).first()
+
+        if conference.evaluated:
+            evaluations = list(map(lambda x: x.evaluationresult, conference.submission_set.all()))
+
+            for x in evaluations:
+                x.grade = x.getGrade()
+
+            context['evaluations'] = evaluations
+        else:
+            context['error'] = True
+            context['evaluations'] = []
+
+        return context

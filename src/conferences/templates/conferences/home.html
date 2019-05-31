@@ -44,10 +44,12 @@
                 <th>Presentation Deadline </th>
                 <th>End Date </th>
                 <th>Enroll As PC Member </th>
-                <th>See the submissions </th>
+                <th>See the Submissions </th>
                 <th>See the PC Members</th>
-                <th>See pending reviews</th>
                 <th>Postpone deadlines</th>
+                <th>See Pending Reviews</th>
+                <th>See Evaluation Result</th>
+                <th>Finish Evaluation Period</th>
             </tr>
         {% for conf in conferences %}
         <tr class="even">
@@ -60,10 +62,12 @@
                 <td>{{ conf.presentation_date }}</td>
                 <td>{{ conf.end_date }}</td>
                 <td><a href="{% url 'enroll-pcmember' conf.id %}"> Enroll As PC Member </a></td>
-                <td><a href="{% url 'submissions' conf.id %}"> See the submissions</a></td>
+                <td><a href="{% url 'submissions' conf.id %}"> See the Submissions</a></td>
                 <td><a href="{% url 'pc-members-panel' conf.id %}"> See the PC Members</a></td>
-                <td><a href="{% url 'reviewer-board' conf.id %}"> See pending reviews</a></td>
                 <td><a href="{% url 'postpone-deadlines' conf.id %}"> Postpone Deadlines</a></td>
+                <td><a href="{% url 'reviewer-board' conf.id %}"> See Pending Reviews</a></td>
+                <td><a href="{% url 'evaluation-result' conf.id %}"> See Evaluation Result</a></td>
+                <td><a href="{% url 'evaluate' conf.id %}"> Finish Evaluation Period </a></td>
             </tr>
         {% endfor %}
     </table>

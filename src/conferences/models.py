@@ -26,6 +26,7 @@ class Conference(models.Model):
     end_date = models.DateField()
 
     chairedBy = models.ForeignKey(Actor, on_delete = models.CASCADE)
+    evaluated = models.BooleanField(default = False)
 
 # this is to automatically add the chair as a pc member
 # makes things easier down the road.
@@ -107,6 +108,15 @@ class ReviewAssignment(models.Model):
     submission = models.ForeignKey(Submission, on_delete = models.CASCADE)
     pcmember = models.ForeignKey(PcMemberIn, on_delete = models.CASCADE)
     grade = models.PositiveSmallIntegerField(default = 1, choices = GradingValues.CHOICES)
+
+    def getGrade(self):
+        for x in GradingValues.CHOICES:
+            if self.grade == x[0]:
+                return x[1]
+
+class EvaluationResult(models.Model):
+    grade = models.PositiveSmallIntegerField(default = 1, choices = GradingValues.CHOICES)
+    submission = models.OneToOneField(Submission, on_delete = models.CASCADE)
 
     def getGrade(self):
         for x in GradingValues.CHOICES:

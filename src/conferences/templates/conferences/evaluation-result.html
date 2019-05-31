@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ block.super }}PC Members for conference {{ conf.name }} {% endblock %}
+
+{% block navbar-left %}
+{% include "_navbar.html" with active_link="home" %}
+{% endblock %}
+
+{% block navbar-right %}
+{{ block.super }}
+{% endblock %}
+
+{% block splash %}
+<div class="jumbotron">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-sm-8">
+                <h1>{% include "_brandname.html" %}</h1>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock splash %}
+
+{% block container %}
+<div class="col-md-4 col-sm-4">
+    <table class="table table-hover">
+        <tr>
+            <th>Title </th>
+            <th>Author Name </th>
+            <th>Final Grade </th>
+        </tr>
+        {% for evaluation in evaluations %}
+        <tr>
+            <td>{{ evaluation.submission.title }}</td>
+            <td>{{ evaluation.submission.submitter.user.name }}</td>
+            <td>{{ evaluation.grade }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% if error %}
+    <hr>
+    <h2> This conference's submission stage is not over yet!</h2>
+    <h2> No results to display!</h2>
+    {% endif %}
+</div>
+{% endblock container %}
+
+{% block scripts %}
+<script src="{% static 'site/js/site.js' %}"></script>
+{% endblock scripts %}

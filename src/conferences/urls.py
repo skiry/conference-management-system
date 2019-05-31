@@ -15,4 +15,6 @@ urlpatterns = [
     path("submissions/<int:submission_id>/assign/<int:pcmember_id>", views.AssignPcMember.as_view(), name="assign-reviewer"),
     path("<int:conference_id>/reviewer-board", views.ReviewerBoard.as_view(), name="reviewer-board"),
     path("submissions/<int:submission_id>/grade/<int:grade_index>", views.GradeSubmission.as_view(), name="grade-submission"),
+    path("<int:conference_id>/evaluation-result", views.EvaluationResult.as_view(), name='evaluation-result'),
+    path("<int:conference_id>/evaluate", views.Evaluation.as_view(), name='evaluate'),
 ]
