@@ -134,6 +134,10 @@ class SpecificSubmission(Abstract):
         if actor.pcmemberin_set.filter(conference_id = submission.conference.id).first() is None:
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
+        # if the actor is the author of this submission ( can happen if pc member submits proposal )
+        if submission.submitter.id == actor.id:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
         return render(request, SpecificSubmission.template_name, self.get_context_data(**kwargs))
 
     def get_context_data(self, **kwargs):
@@ -178,6 +182,10 @@ class BidSubmission(FormView, Abstract):
         if pcmemberin is None:
             return super().form_invalid(form)
 
+        # if this actor is the author of this submission
+        if this_submission.submitter.id == actor.id:
+            return super().form_invalid(form)
+
         # if this actor has already bid on this submission...
         if models.SubmissionRemark.objects.filter(submission_id = this_submission.id).filter(pcmember_id = pcmemberin.id).first() is not None:
             return super().form_invalid(form)
@@ -205,6 +213,10 @@ class CommentSubmission(FormView, Abstract):
 
         # if this conference does not exist.
         if this_submission is None:
+            return super().form_invalid(form)
+
+        # if this actor is the author of this submission
+        if this_submission.submitter.id == actor.id:
             return super().form_invalid(form)
 
         this_conference = this_submission.conference
@@ -270,8 +282,16 @@ class AssignPcMember(Abstract):
         if _submission is None or _pcmember is None:
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
+        # if the pcmember is the chair
+        if _pcmember.conference.chairedBy.id == _pcmember.actor.id:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
         # if the currently logged user is not the chair where the submission was made...
         if _submission.conference.chairedBy.id != actor.id:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        # if the pcmember submitter this paper
+        if _submission.submitter.id == _pcmember.actor.id:
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
         # if the pcmember is not a member in this conference...
@@ -339,8 +359,17 @@ class GradeSubmission(Abstract):
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
         _pcmember = _submission.conference.pcmemberin_set.filter(actor_id = actor.id).first()
+
         # if the pcmember is bad...
         if _pcmember is None:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        # if this pcmember is the chair
+        if _pcmember.conference.chairedBy.id == _pcmember.actor.id:
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+
+        # if this pcmember submitter this proposal
+        if _submission.submitter.id == _pcmember.actor.id:
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
         reviewAssignment = _pcmember.reviewassignment_set.filter(submission_id = _submission.id).first()
