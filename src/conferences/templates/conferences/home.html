@@ -20,46 +20,49 @@
             <div class="col-md-8 col-sm-8">
                 <h1>{% include "_brandname.html" %}</h1>
             </div>
-            <div class="col-md-4 col-sm-4">
-                <li><a href="{% url 'add-conference' %}"> Add a conference</a></li>
-            </div>
         </div>
     </div>
 </div>
+<div style="text-align: center">
+    <a style="text-decoration: none" href="{% url 'add-conference' %}">
+        <button class="btn btn-primary btn-warning">Add a conference</button>
+    </a>
+</div>
+<hr>
 {% endblock splash %}
 
 {% block container %}
-<div class="col-md-4 col-sm-4">
-    <table class="table table-hover">
-        <tr>
-            <th>Name </th>
-            <th>Website </th>
-            <th>General Information </th>
-            <th>Start Date </th>
-            <th>Abstract Deadline </th>
-            <th>Submission Deadline </th>
-            <th>Presentation Deadline </th>
-            <th>End Date </th>
-            <th>Enroll As PC Member </th>
-            <th>See the submissions </th>
-            <th>See the PC Members </th>
-            <th>See Pending Reviews </th>
-        </tr>
+<div class="col-md-12 col-sm-12">
+    <table align="center" class="table table-hover">
+            <tr>
+                <th>Name </th>
+                <th>Website </th>
+                <th>General Information </th>
+                <th>Start Date </th>
+                <th>Abstract Deadline </th>
+                <th>Submission Deadline </th>
+                <th>Presentation Deadline </th>
+                <th>End Date </th>
+                <th>Enroll As PC Member </th>
+                <th>See the submissions </th>
+                <th>See the PC Members</th>
+                <th>See pending reviews</th>
+            </tr>
         {% for conf in conferences %}
-        <tr>
-            <td><a href="{% url 'submit-proposal' conf.id %}">{{ conf.name }}</a></td>
-            <td>{{ conf.website }}</td>
-            <td>{{ conf.info }}</td>
-            <td>{{ conf.startDate }}</td>
-            <td>{{ conf.abstractDate }}</td>
-            <td>{{ conf.submissionDate }}</td>
-            <td>{{ conf.presentationDate }}</td>
-            <td>{{ conf.endDate }}</td>
-            <td><a href="{% url 'enroll-pcmember' conf.id %}"> Enroll As PC Member </a></td>
-            <td><a href="{% url 'submissions' conf.id %}"> See the submissions</a></td>
-            <td><a href="{% url 'pc-members-panel' conf.id %}"> See the PC Members</a></td>
-            <td><a href="{% url 'reviewer-board' conf.id %}"> See Pending Reviews</a></td>
-        </tr>
+        <tr class="even">
+                <td><a href="{% url 'submit-proposal' conf.id %}">{{ conf.name }}</a></td>
+                <td>{{ conf.website }}</td>
+                <td>{{ conf.info }}</td>
+                <td>{{ conf.start_date }}</td>
+                <td>{{ conf.abstract_date }}</td>
+                <td>{{ conf.submission_date }}</td>
+                <td>{{ conf.presentation_date }}</td>
+                <td>{{ conf.end_date }}</td>
+                <td><a href="{% url 'enroll-pcmember' conf.id %}"> Enroll As PC Member </a></td>
+                <td><a href="{% url 'submissions' conf.id %}"> See the submissions</a></td>
+                <td><a href="{% url 'pc-members-panel' conf.id %}"> See the PC Members</a></td>
+                <td><a href="{% url 'reviewer-board' conf.id %}"> See pending reviews</a></td>
+            </tr>
         {% endfor %}
     </table>
 </div>

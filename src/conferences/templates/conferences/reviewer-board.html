@@ -38,8 +38,8 @@
         <tr>
             <td>{{ submission.title }}</td>
             <td>{{ submission.abstract }}</td>
-            <td>{{ submission.fullPaper }}</td>
-            <td>{{ submission.metaInfo }}</td>
+            <td>{{ submission.full_paper }}</td>
+            <td>{{ submission.meta_info }}</td>
 
             {% for grade in grades %}
             <td><a href="{% url 'grade-submission' submission.id grade.0 %}">{{ grade.1 }}</a></td>

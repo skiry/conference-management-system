@@ -34,11 +34,11 @@ class AddConference(FormView, Abstract):
             name = data['name'],
             website = data['website'],
             info = data['info'],
-            startDate = data['startDate'],
-            abstractDate = data['abstractDate'],
-            submissionDate = data['submissionDate'],
-            presentationDate = data['presentationDate'],
-            endDate = data['endDate'],
+            start_date=data['start_date'],
+            abstract_date=data['abstract_date'],
+            submission_date=data['submission_date'],
+            presentation_date=data['presentation_date'],
+            end_date=data['end_date'],
             chairedBy = models.loggedActor(self)
         ).save()
 
@@ -65,14 +65,14 @@ class SubmitProposal(FormView, Abstract):
             return super().form_invalid(form)
 
         # Or if we're beyond the time for submitting abstracts...
-        if this_conference.abstractDate <= datetime.date.today():
+        if this_conference.abstract_date <= datetime.date.today():
             return super().form_invalid(form)
 
         models.Submission(
             title = data['title'],
             abstract = data['abstract'],
-            fullPaper = data['fullPaper'],
-            metaInfo = data['metaInfo'],
+            full_paper = data['full_paper'],
+            meta_info = data['meta_info'],
             submitter = actor,
             conference = this_conference
         ).save()

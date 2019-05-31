@@ -41,8 +41,8 @@
         {% for submission in submissions %}
         <tr>
             <td>{{ submission.abstract }}</td>
-            <td>{{ submission.metaInfo }}</td>
-            <td>{{ submission.fullPaper }}</td>
+            <td>{{ submission.meta_info }}</td>
+            <td>{{ submission.full_paper }}</td>
             <td>{{ submission.submitter.user.name }}</td>
             <td><a href="{% url 'specific-submission' submission.id %}"> See biddings and remarks </a></td>
         </tr>

@@ -19,11 +19,11 @@ class Conference(models.Model):
     website = models.CharField(max_length = 255, unique = True)
     info = models.CharField(max_length = 4096)
 
-    startDate = models.DateField()
-    abstractDate = models.DateField()
-    submissionDate = models.DateField()
-    presentationDate = models.DateField()
-    endDate = models.DateField()
+    start_date = models.DateField()
+    abstract_date = models.DateField()
+    submission_date = models.DateField()
+    presentation_date = models.DateField()
+    end_date = models.DateField()
 
     chairedBy = models.ForeignKey(Actor, on_delete = models.CASCADE)
 
@@ -38,8 +38,8 @@ def _post_save_conference_handler(sender, **kwargs):
 class Submission(models.Model):
     title = models.CharField(max_length = 128)
     abstract = models.CharField(max_length = 2550)
-    fullPaper = models.CharField(max_length = 25500, null = True)
-    metaInfo = models.CharField(max_length = 10000, null = True)
+    full_paper = models.CharField(max_length=25500, null=True)
+    meta_info = models.CharField(max_length=10000, null=True)
     submitter = models.ForeignKey(Actor, on_delete = models.CASCADE)
     conference = models.ForeignKey(Conference, on_delete = models.CASCADE)
 
