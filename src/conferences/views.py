@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from braces import views as bracesviews
 from django import forms as django_forms
+from django.contrib import messages
 from django.shortcuts import render
 from django.views import generic
 from django.views.generic import FormView
@@ -56,35 +57,41 @@ class PostponeDeadlines(FormView, Abstract):
         actor = models.loggedActor(self)
         actors_conference = actor.conference_set.filter(id = conf_id).first()
         this_conference = models.Conference.objects.get(id=conf_id)
+        correct = 1
 
         # if this conference does not exist.
         if this_conference is None:
-            return super().form_invalid(form)
+            correct = 0
 
         # if this user is not chairing this conference... then he can't postpone deadlines
-        if actors_conference is None:
-            return super().form_invalid(form)
+        elif actors_conference is None:
+            correct = 0
 
-        if this_conference.abstract_date >= data['abstract_date']:
-            return super().form_invalid(form)
+        elif this_conference.abstract_date >= data['abstract_date']:
+            correct = 0
 
-        if this_conference.submission_date >= data['submission_date']:
-            return super().form_invalid(form)
+        elif this_conference.submission_date >= data['submission_date']:
+            correct = 0
 
-        if this_conference.presentation_date >= data['presentation_date']:
-            return super().form_invalid(form)
+        elif this_conference.presentation_date >= data['presentation_date']:
+            correct = 0
 
-        if this_conference.end_date >= data['end_date']:
-            return super().form_invalid(form)
+        elif this_conference.end_date >= data['end_date']:
+            correct = 0
 
-        this_conference.abstract_date = data['abstract_date']
-        this_conference.submission_date = data['submission_date']
-        this_conference.presentation_date = data['presentation_date']
-        this_conference.end_date = data['end_date']
 
-        this_conference.save()
+        if correct:
+            this_conference.abstract_date = data['abstract_date']
+            this_conference.submission_date = data['submission_date']
+            this_conference.presentation_date = data['presentation_date']
+            this_conference.end_date = data['end_date']
 
-        return super().form_valid(form)
+            this_conference.save()
+            messages.success(self.request, 'Deadlines postponed successfully!')
+            return super(PostponeDeadlines, self).form_valid(form)
+        else:
+            messages.error(self.request, 'Pay attention to your role / input fields!')
+            return self.render_to_response(self.get_context_data(form=form))
 
 class SubmitProposal(FormView, Abstract):
     template_name = "conferences/submit-proposal.html"
