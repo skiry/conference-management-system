@@ -130,6 +130,13 @@ class Submission(models.Model):
             return "actorIsSubmissionAuthor"
         return "Ok"
 
+    def updateInfo(self, data):
+        self.title = data['title']
+        self.abstract = data['abstract']
+        self.full_paper = data['full_paper']
+        self.meta_info = data['meta_info']
+        self.save()
+
 class BiddingValues:
     DEFAULT = 1
     E = 'Want to Evaluate'

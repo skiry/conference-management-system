@@ -50,6 +50,7 @@ class PostponeDeadlines(forms.Form):
             Submit("update_conference", "Update conference", css_class="btn btn-lg btn-primary btn-block"),
         )
 
+
 class SubmitProposal(forms.Form):
     title = forms.CharField(max_length = 128)
     abstract = forms.CharField(max_length = 2550)
@@ -67,6 +68,26 @@ class SubmitProposal(forms.Form):
             Field("meta_info", placeholder="General Information Behind the Paper"),
             Submit("submit_proposal", "Submit your proposal", css_class="btn btn-lg btn-primary btn-block")
         )
+
+
+class UpdateSubmission(forms.Form):
+    title = forms.CharField(max_length=128)
+    abstract = forms.CharField(max_length=2550)
+    full_paper = forms.CharField(max_length=25500, required=False)
+    meta_info = forms.CharField(max_length=10000, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            Field("title", placeholder="Paper Title"),
+            Field("abstract", placeholder="Paper Abstract"),
+            Field("full_paper", placeholder="Full Paper"),
+            Field("meta_info", placeholder="General Information Behind the Paper"),
+            Submit("update_submission", "Update this Submission", css_class="btn btn-lg btn-primary btn-block")
+        )
+
 
 class EnrollPcMember(forms.Form):
     description = forms.CharField(max_length = 1024)

@@ -1,0 +1,13 @@
+{% extends "conferences/form_base.html" %}
+
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ block.super }}Update Submission{% endblock %}
+
+
+{% block form_heading %}Here you can update title, abstract, full paper and meta info for this submission{% endblock %}
+
+{% block form %}
+  {% crispy form %}
+{% endblock form %}
