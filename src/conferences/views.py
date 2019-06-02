@@ -198,6 +198,40 @@ class Submissions(Abstract):
         return context
 
 
+class UpdateSubmission(FormView, Abstract):
+    template_name = "conferences/update-submission.html"
+    form_class = forms.UpdateSubmission
+    success_url = reverse_lazy("conferences")
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        submission_id = self.kwargs['submission_id']
+        actor = models.loggedActor(self)
+        this_submission = models.Submission.objects.get(id=submission_id)
+        this_conference = this_submission.conference
+        actors_conference = actor.conference_set.filter(id=this_conference.id).first()
+        valid_context = True
+
+        # if this conference does not exist.
+        if this_conference is None:
+            messages.error(self.request, 'Wrong conference!')
+            valid_context = False
+
+        # if this user is chairing this conference... then he can't update submission(proposal)
+        if actors_conference is not None:
+            messages.error(self.request, 'You are the chair!')
+            valid_context = False
+
+        if this_submission is None:
+            messages.error(self.request, 'Wrong submission!')
+            valid_context = False
+
+        if valid_context:
+            this_submission.updateInfo(data)
+            messages.success(self.request, 'Update made successfully!')
+        return HttpResponseRedirect('/conferences/' + str(this_conference.id) + '/submissions')
+
+
 class SpecificSubmission(Abstract):
     template_name = "conferences/specific-submission.html"
 

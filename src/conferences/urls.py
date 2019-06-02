@@ -9,6 +9,7 @@ urlpatterns = [
     path("<int:conference_id>/enroll", views.EnrollPcMember.as_view(), name='enroll-pcmember'),
     path("<int:conference_id>/submissions", views.Submissions.as_view(), name='submissions'),
     path("submissions/<int:submission_id>", views.SpecificSubmission.as_view(), name='specific-submission'),
+    path("submissions/<int:submission_id>/updateSubmission", views.UpdateSubmission.as_view(), name='update-submission'),
     path("submissions/<int:submission_id>/bid", views.BidSubmission.as_view(), name='bid-submission'),
     path("submissions/<int:submission_id>/comment", views.CommentSubmission.as_view(), name='comment-submission'),
     path("<int:conference_id>/pc-members", views.PcMembersPanel.as_view(), name="pc-members-panel"),
