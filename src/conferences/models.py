@@ -100,6 +100,13 @@ class Conference(models.Model):
     def getPCMemberIn(self, actor):
         return self.pcmemberin_set.filter(actor_id=actor.id).first()
 
+    def isChairedBy(self, actor):
+        if self is None:
+            return "doesNotExist"
+        if self.chairedBy.id != actor.id:
+            return "notConferenceChair"
+        return "Ok"
+
 # this is to automatically add the chair as a pc member
 # makes things easier down the road.
 @receiver(post_save, sender=Conference)

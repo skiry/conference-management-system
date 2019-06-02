@@ -302,28 +302,21 @@ class CommentSubmission(FormView, Abstract):
         actor = models.loggedActor(self)
         this_submission = models.Submission.objects.filter(id=submission_id).first()
 
-        # if this conference does not exist.
-        if this_submission is None:
-            return super().form_invalid(form)
-
-        # if this actor is the author of this submission
-        if this_submission.submitter.id == actor.id:
-            return super().form_invalid(form)
-
         this_conference = this_submission.conference
-        pcmemberin = this_conference.pcmemberin_set.filter(actor_id=actor.id).first()
+        evaluate = [this_submission.actorIsSubmissionAuthor(actor), this_conference.actorIsPCMember(actor)]
 
-        # if this actor is not a pc member in this conference...
-        if pcmemberin is None:
-            return super().form_invalid(form)
-
-        models.SubmissionRemark(
-            submission=this_submission,
-            pcmember=pcmemberin,
-            content=data['remark']
-        ).save()
-
-        return super().form_valid(form)
+        if evaluate.count("Ok") != len(evaluate):
+            for evaluation in evaluate:
+                if evaluation != "Ok":
+                    reactToFormAction(evaluation, self.request)
+                    return HttpResponseRedirect('/conferences/submissions/' + str(submission_id))
+        else:
+            models.SubmissionRemark(
+                submission=this_submission,
+                pcmember=this_conference.getPCMemberIn(actor),
+                content=data['remark']
+            ).save()
+            return HttpResponseRedirect('/conferences/submissions/' + str(submission_id))
 
 
 class PcMembersPanel(Abstract):
@@ -334,25 +327,13 @@ class PcMembersPanel(Abstract):
         conf_id = self.kwargs['conference_id']
         this_conference = models.Conference.objects.filter(id=conf_id).first()
 
-        correct = 0
-        # if this conference does not exist.
-        if this_conference is None:
-            correct = 1
+        evaluate = this_conference.isChairedBy(actor)
 
-        # if this user is not the chair...
-        if this_conference.chairedBy.id != actor.id:
-            correct = 2
-
-        if correct == 0:
+        if evaluate == "Ok":
             messages.success(self.request, 'Permission OK!')
             return render(request, PcMembersPanel.template_name, self.get_context_data(**kwargs))
-        elif correct == 1:
-            messages.error(self.request, 'The conference does not exists!')
-        elif correct == 2:
-            messages.error(self.request, 'You are not the chair and cannot see PC members!')
         else:
-            messages.error(self.request, 'Some error occured!')
-
+            reactToFormAction(evaluate, request)
         return HttpResponseRedirect(reverse_lazy("conferences"))
 
     def get_context_data(self, **kwargs):
@@ -423,15 +404,14 @@ class ReviewerBoard(Abstract):
         actor = models.loggedActor(self)
         conference = models.Conference.objects.filter(id=self.kwargs['conference_id']).first()
 
-        # if the conference does not exist
-        if conference is None:
+        evaluate = conference.isChairedBy(actor)
+        if evaluate == "Ok":
+            return render(request, ReviewerBoard.template_name, self.get_context_data(**kwargs))
+        else:
+            reactToFormAction(evaluate, request)
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
-        # if the actor is not a pc member for the conference...
-        if actor.pcmemberin_set.filter(conference_id=conference.id).first() is None:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
 
-        return render(request, ReviewerBoard.template_name, self.get_context_data(**kwargs))
 
     def get_context_data(self, **kwargs):
         context = super(Abstract, self).get_context_data(**kwargs)
