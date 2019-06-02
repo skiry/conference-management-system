@@ -1,3 +1,5 @@
+import re
+
 from django.db import models
 from django.contrib.auth import get_user_model
 
@@ -9,6 +11,11 @@ User = get_user_model()
 
 class Actor(models.Model):
     user = models.OneToOneField(User, on_delete = models.CASCADE)
+
+    def isConferenceChair(self, conferenceId):
+        if self.conference_set.filter(id = conferenceId).first() is None:
+            return "notConferenceChair"
+        return "Ok"
 
 @receiver(post_save, sender=User)
 def _post_save_user_handler(sender, **kwargs):
@@ -27,6 +34,63 @@ class Conference(models.Model):
 
     chairedBy = models.ForeignKey(Actor, on_delete = models.CASCADE)
     evaluated = models.BooleanField(default = False)
+
+    def isNewDateAfterCurrent(self, data):
+        if self is None:
+            return "doesNotExist"
+
+        if self.abstract_date >= data['abstract_date']:
+            return "dateBefore"
+
+        if self.submission_date >= data['submission_date']:
+            return "dateBefore"
+
+        if self.presentation_date >= data['presentation_date']:
+            return "dateBefore"
+
+        if self.end_date >= data['end_date']:
+            return "dateBefore"
+
+        return "Ok"
+
+    def checkProposalSubmit(self):
+        if self is None:
+            return "doesNotExist"
+
+        if self.end_date < self.start_date:
+            return "checkDates"
+
+        if self.submission_date < self.abstract_date:
+            return "checkDates"
+
+        if self.presentation_date < self.start_date \
+            or self.presentation_date > self.end_date:
+            return "checkDates"
+
+        regex = re.compile(
+            r'^(?:http|ftp)s?://'  # http:// or https://
+            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+            r'localhost|'  # localhost...
+            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+            r'(?::\d+)?'  # optional port
+            r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
+        print(re.match(regex, self.website))
+        print(re.match(regex, "www.google"))
+        print(re.match(regex, "google.com"))
+        print(re.match(regex, "www.google.com"))
+        if re.match(regex, self.website) is None:
+            return "websiteNotOk"
+
+        return "Ok"
+
+    def updateDates(self, data):
+        self.abstract_date = data['abstract_date']
+        self.submission_date = data['submission_date']
+        self.presentation_date = data['presentation_date']
+        self.end_date = data['end_date']
+
+        self.save()
 
 # this is to automatically add the chair as a pc member
 # makes things easier down the road.

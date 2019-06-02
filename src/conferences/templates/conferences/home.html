@@ -58,7 +58,7 @@
                 {% else %}
                 <td><a href="{% url 'submit-proposal' conf.id %}"> {{ conf.name }} </a></td>
                 {% endif %}
-                <td>{{ conf.website }}</td>
+                <td><a href="{{ conf.website }}">{{ conf.website }}</a></td>
                 <td>{{ conf.info }}</td>
                 <td>{{ conf.start_date }}</td>
                 <td>{{ conf.abstract_date }}</td>

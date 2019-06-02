@@ -12,6 +12,21 @@ import datetime
 from . import forms
 from . import models
 
+def reactToFormAction(evaluate, request):
+    if evaluate == "notConferenceChair":
+        messages.error(request, 'You are not the chair!')
+    elif evaluate == "dateBefore":
+        messages.error(request, 'You time-traveller...')
+    elif evaluate == "doesNotExist":
+        messages.error(request, 'This conference does not exist!')
+    elif evaluate == "checkDates":
+        messages.error(request, 'Make sure the conference ends after it starts and the abstract\'s '
+                                'deadline if before the full paper\'s deadline !')
+    elif evaluate == "websiteNotOk":
+        messages.error(request, 'Make sure your website is correct ( http://www.[].[]!')
+    else:
+        messages.error(request, 'Some error occured!')
+
 class Abstract(bracesviews.LoginRequiredMixin, generic.TemplateView):
     pass
 
@@ -32,8 +47,7 @@ class AddConference(FormView, Abstract):
     def form_valid(self, form):
         data = form.cleaned_data
 
-        #if ()
-        models.Conference(
+        conference = models.Conference(
             name = data['name'],
             website = data['website'],
             info = data['info'],
@@ -43,10 +57,18 @@ class AddConference(FormView, Abstract):
             presentation_date=data['presentation_date'],
             end_date=data['end_date'],
             chairedBy = models.loggedActor(self)
-        ).save()
+        )
 
-        return super().form_valid(form)
+        evaluate = conference.checkProposalSubmit()
 
+
+        if evaluate is "Ok":
+            conference.save()
+            messages.success(self.request, 'Conference added successfully!')
+            return HttpResponseRedirect(reverse_lazy("conferences"))
+        else:
+            reactToFormAction(evaluate, self.request)
+            return self.render_to_response(self.get_context_data(form=form))
 
 class PostponeDeadlines(FormView, Abstract):
     template_name = "conferences/postpone-deadlines.html"
@@ -57,49 +79,25 @@ class PostponeDeadlines(FormView, Abstract):
         data = form.cleaned_data
         conf_id = self.kwargs['conference_id']
         actor = models.loggedActor(self)
-        actors_conference = actor.conference_set.filter(id = conf_id).first()
         this_conference = models.Conference.objects.get(id=conf_id)
-        correct = 0
 
-        # if this conference does not exist.
-        if this_conference is None:
-            correct = 1
-
+        evaluate = []
         # if this user is not chairing this conference... then he can't postpone deadlines
-        elif actors_conference is None:
-            correct = 2
+        evaluate.append(actor.isConferenceChair(conf_id))
 
-        elif this_conference.abstract_date >= data['abstract_date']:
-            correct = 3
+        # if this conference does not exist / date before current date.
+        evaluate.append(this_conference.isNewDateAfterCurrent(data))
 
-        elif this_conference.submission_date >= data['submission_date']:
-            correct = 3
+        for evaluation in evaluate:
+            if evaluation is "Ok":
+                this_conference.updateDates(data)
+                messages.success(self.request, 'Deadlines postponed successfully!')
+                return super(PostponeDeadlines, self).form_valid(form)
+            else:
+                reactToFormAction(evaluation, self.request)
+                return self.render_to_response(self.get_context_data(form=form))
 
-        elif this_conference.presentation_date >= data['presentation_date']:
-            correct = 3
 
-        elif this_conference.end_date >= data['end_date']:
-            correct = 3
-
-
-        if correct == 0:
-            this_conference.abstract_date = data['abstract_date']
-            this_conference.submission_date = data['submission_date']
-            this_conference.presentation_date = data['presentation_date']
-            this_conference.end_date = data['end_date']
-
-            this_conference.save()
-            messages.success(self.request, 'Deadlines postponed successfully!')
-            return super(PostponeDeadlines, self).form_valid(form)
-        elif correct == 2:
-            messages.error(self.request, 'You are not the chair!')
-        elif correct == 3:
-            messages.error(self.request, 'You time-traveller...')
-        elif correct == 1:
-            messages.error(self.request, 'This conference does not exist!')
-        else:
-            messages.error(self.request, 'Some error occured!')
-        return self.render_to_response(self.get_context_data(form=form))
 
 class SubmitProposal(FormView, Abstract):
     template_name = "conferences/submit-proposal.html"
