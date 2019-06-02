@@ -53,7 +53,11 @@
             </tr>
         {% for conf in conferences %}
         <tr class="even">
-                <td><a href="{% url 'submit-proposal' conf.id %}">{{ conf.name }}</a></td>
+                {% if conf.chairedBy.id == actor.id %}
+                <td>{{ conf.name }}</td>
+                {% else %}
+                <td><a href="{% url 'submit-proposal' conf.id %}"> {{ conf.name }} </a></td>
+                {% endif %}
                 <td>{{ conf.website }}</td>
                 <td>{{ conf.info }}</td>
                 <td>{{ conf.start_date }}</td>

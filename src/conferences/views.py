@@ -20,6 +20,7 @@ class HomePage(Abstract):
 
     def get_context_data(self, **kwargs):
         context = super(Abstract, self).get_context_data(**kwargs)
+        context['actor'] = models.loggedActor(self)
         context['conferences'] = models.Conference.objects.all()
         return context
 
@@ -31,6 +32,7 @@ class AddConference(FormView, Abstract):
     def form_valid(self, form):
         data = form.cleaned_data
 
+        #if ()
         models.Conference(
             name = data['name'],
             website = data['website'],
@@ -57,30 +59,30 @@ class PostponeDeadlines(FormView, Abstract):
         actor = models.loggedActor(self)
         actors_conference = actor.conference_set.filter(id = conf_id).first()
         this_conference = models.Conference.objects.get(id=conf_id)
-        correct = 1
+        correct = 0
 
         # if this conference does not exist.
         if this_conference is None:
-            correct = 0
+            correct = 1
 
         # if this user is not chairing this conference... then he can't postpone deadlines
         elif actors_conference is None:
-            correct = 0
+            correct = 2
 
         elif this_conference.abstract_date >= data['abstract_date']:
-            correct = 0
+            correct = 3
 
         elif this_conference.submission_date >= data['submission_date']:
-            correct = 0
+            correct = 3
 
         elif this_conference.presentation_date >= data['presentation_date']:
-            correct = 0
+            correct = 3
 
         elif this_conference.end_date >= data['end_date']:
-            correct = 0
+            correct = 3
 
 
-        if correct:
+        if correct == 0:
             this_conference.abstract_date = data['abstract_date']
             this_conference.submission_date = data['submission_date']
             this_conference.presentation_date = data['presentation_date']
@@ -89,9 +91,15 @@ class PostponeDeadlines(FormView, Abstract):
             this_conference.save()
             messages.success(self.request, 'Deadlines postponed successfully!')
             return super(PostponeDeadlines, self).form_valid(form)
+        elif correct == 2:
+            messages.error(self.request, 'You are not the chair!')
+        elif correct == 3:
+            messages.error(self.request, 'You time-traveller...')
+        elif correct == 1:
+            messages.error(self.request, 'This conference does not exist!')
         else:
-            messages.error(self.request, 'Pay attention to your role / input fields!')
-            return self.render_to_response(self.get_context_data(form=form))
+            messages.error(self.request, 'Some error occured!')
+        return self.render_to_response(self.get_context_data(form=form))
 
 class SubmitProposal(FormView, Abstract):
     template_name = "conferences/submit-proposal.html"
@@ -106,28 +114,40 @@ class SubmitProposal(FormView, Abstract):
         actors_conference = actor.conference_set.filter(id = conf_id).first()
         this_conference = models.Conference.objects.filter(id = conf_id).first()
 
+        correct = 0
         # if this conference does not exist.
         if this_conference is None:
-            return super().form_invalid(form)
+            correct = 1
 
         # if this user is chairing this conference... then they can't submit
         if actors_conference is not None:
-            return super().form_invalid(form)
+            correct = 2
 
         # Or if we're beyond the time for submitting abstracts...
         if this_conference.abstract_date <= datetime.date.today():
-            return super().form_invalid(form)
+            correct = 3
 
-        models.Submission(
-            title = data['title'],
-            abstract = data['abstract'],
-            full_paper = data['full_paper'],
-            meta_info = data['meta_info'],
-            submitter = actor,
-            conference = this_conference
-        ).save()
 
-        return super().form_valid(form)
+
+        if correct == 0:
+            models.Submission(
+                title=data['title'],
+                abstract=data['abstract'],
+                full_paper=data['full_paper'],
+                meta_info=data['meta_info'],
+                submitter=actor,
+                conference=this_conference
+            ).save()
+            messages.success(self.request, 'You have successfully posted your submission!')
+            return super(SubmitProposal, self).form_valid(form)
+        elif correct == 2:
+            messages.error(self.request, 'You are the chair! You cannot submit a proposal!')
+        elif correct == 3:
+            messages.error(self.request, 'Unfortunately is too late!')
+        else:
+            messages.error(self.request, 'Some error occured!')
+
+        return self.render_to_response(self.get_context_data(form=form))
 
 class EnrollPcMember(FormView, Abstract):
     template_name = "conferences/enroll-pcmember.html"
@@ -141,25 +161,35 @@ class EnrollPcMember(FormView, Abstract):
         actors_conference = actor.conference_set.filter(id = conf_id).first()
         this_conference = models.Conference.objects.filter(id = conf_id).first()
 
+        correct = 0
         # if this conference does not exist...
         if this_conference is None:
-            return super().form_invalid(form)
+            correct = 1
 
         # if this user is chairing this conference... then they can't submit
         if actors_conference is not None:
-            return super().form_invalid(form)
+            correct = 2
 
         # if this user is already a pc member in this conference... then he can't submit
-        if this_conference.pcmemberin_set.filter(actor_id = actor.id).first() is not None:
-            return super().form_invalid(form)
+        elif this_conference.pcmemberin_set.filter(actor_id = actor.id).first() is not None:
+            correct = 3
 
-        models.PcMemberIn(
-            description = data['description'],
-            actor = actor,
-            conference = this_conference
-        ).save()
+        if correct == 0:
+            models.PcMemberIn(
+                description=data['description'],
+                actor=actor,
+                conference=this_conference
+            ).save()
+            messages.success(self.request, 'You are successfully enrolled!')
+            return super(EnrollPcMember, self).form_valid(form)
+        elif correct == 2:
+            messages.error(self.request, 'I see what you\'re doing.. haha you little cheater!')
+        elif correct == 3:
+            messages.error(self.request, 'You\'d better create a clone if you want to be a PC member twice!')
+        else:
+            messages.error(self.request, 'Some error occured!')
 
-        return super().form_valid(form)
+        return self.render_to_response(self.get_context_data(form=form))
 
 class Submissions(Abstract):
     template_name = "conferences/submissions.html"
@@ -176,19 +206,28 @@ class SpecificSubmission(Abstract):
         submission = models.Submission.objects.filter(id = self.kwargs['submission_id']).first()
         actor = models.loggedActor(self)
 
+        correct = 0
         # if submission doesn't exist...
         if submission is None:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
+            correct = 1
 
         # if the actor isn't a pc member for this conference...
         if actor.pcmemberin_set.filter(conference_id = submission.conference.id).first() is None:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
+            correct = 2
 
         # if the actor is the author of this submission ( can happen if pc member submits proposal )
         if submission.submitter.id == actor.id:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
+            correct = 3
 
-        return render(request, SpecificSubmission.template_name, self.get_context_data(**kwargs))
+        if correct == 0:
+            messages.success(self.request, 'You are allowed to see this page!')
+            return render(request, SpecificSubmission.template_name, self.get_context_data(**kwargs))
+        elif correct == 2:
+            messages.error(self.request, 'You are not a PC member!')
+        elif correct == 3:
+            messages.error(self.request, 'You are the author!')
+
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     def get_context_data(self, **kwargs):
         context = super(Abstract, self).get_context_data(**kwargs)
@@ -292,15 +331,26 @@ class PcMembersPanel(Abstract):
         conf_id = self.kwargs['conference_id']
         this_conference = models.Conference.objects.filter(id = conf_id).first()
 
+        correct = 0
         # if this conference does not exist.
         if this_conference is None:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
+            correct = 1
 
         # if this user is not the chair...
         if this_conference.chairedBy.id != actor.id:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
+            correct = 2
 
-        return render(request, PcMembersPanel.template_name, self.get_context_data(**kwargs))
+        if correct == 0:
+            messages.success(self.request, 'Permission OK!')
+            return render(request, PcMembersPanel.template_name, self.get_context_data(**kwargs))
+        elif correct == 1:
+            messages.error(self.request, 'The conference does not exists!')
+        elif correct == 2:
+            messages.error(self.request, 'You are not the chair and cannot see PC members!')
+        else:
+            messages.error(self.request, 'Some error occured!')
+
+        return HttpResponseRedirect(reverse_lazy("conferences"))
 
     def get_context_data(self, **kwargs):
         context = super(Abstract, self).get_context_data(**kwargs)
@@ -468,13 +518,26 @@ class EvaluationResult(Abstract):
     template_name = "conferences/evaluation-result.html"
 
     def dispatch(self, request, *args, **kwargs):
+        actor = models.loggedActor(self)
         conference = models.Conference.objects.filter(id = self.kwargs['conference_id']).first()
 
+        correct = 0
         # if submission doesn't exist...
         if conference is None:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
+            correct = 1
 
-        return render(request, EvaluationResult.template_name, self.get_context_data(**kwargs))
+        if actor.pcmemberin_set.filter(conference_id = conference.id).first() is None:
+            correct = 2
+
+        if correct == 0:
+            messages.success(self.request, 'Permission OK!')
+            return render(request, EvaluationResult.template_name, self.get_context_data(**kwargs))
+        elif correct == 1:
+            messages.error(self.request, 'The conference does not exist!')
+        elif correct == 2:
+            messages.error(self.request, 'You are not a PC member!')
+
+        return HttpResponseRedirect(reverse_lazy("conferences"))
 
     def get_context_data(self, **kwargs):
         context = super(Abstract, self).get_context_data(**kwargs)
