@@ -12,6 +12,7 @@ import datetime
 from . import forms
 from . import models
 
+
 def reactToFormAction(evaluate, request):
     if evaluate == "notConferenceChair":
         messages.error(request, 'You are not the chair!')
@@ -24,11 +25,15 @@ def reactToFormAction(evaluate, request):
                                 'deadline if before the full paper\'s deadline !')
     elif evaluate == "websiteNotOk":
         messages.error(request, 'Make sure your website is correct ( http://www.[].[]!')
+    elif evaluate == "alreadyBid":
+        messages.error(request, 'You already have done a bid to this submission!')
     else:
         messages.error(request, 'Some error occured!')
 
+
 class Abstract(bracesviews.LoginRequiredMixin, generic.TemplateView):
     pass
+
 
 class HomePage(Abstract):
     template_name = "conferences/home.html"
@@ -39,6 +44,7 @@ class HomePage(Abstract):
         context['conferences'] = models.Conference.objects.all()
         return context
 
+
 class AddConference(FormView, Abstract):
     template_name = "conferences/conference-add.html"
     form_class = forms.AddConference
@@ -48,19 +54,18 @@ class AddConference(FormView, Abstract):
         data = form.cleaned_data
 
         conference = models.Conference(
-            name = data['name'],
-            website = data['website'],
-            info = data['info'],
+            name=data['name'],
+            website=data['website'],
+            info=data['info'],
             start_date=data['start_date'],
             abstract_date=data['abstract_date'],
             submission_date=data['submission_date'],
             presentation_date=data['presentation_date'],
             end_date=data['end_date'],
-            chairedBy = models.loggedActor(self)
+            chairedBy=models.loggedActor(self)
         )
 
         evaluate = conference.checkProposalSubmit()
-
 
         if evaluate is "Ok":
             conference.save()
@@ -69,6 +74,7 @@ class AddConference(FormView, Abstract):
         else:
             reactToFormAction(evaluate, self.request)
             return self.render_to_response(self.get_context_data(form=form))
+
 
 class PostponeDeadlines(FormView, Abstract):
     template_name = "conferences/postpone-deadlines.html"
@@ -81,22 +87,17 @@ class PostponeDeadlines(FormView, Abstract):
         actor = models.loggedActor(self)
         this_conference = models.Conference.objects.get(id=conf_id)
 
-        evaluate = []
-        # if this user is not chairing this conference... then he can't postpone deadlines
-        evaluate.append(actor.isConferenceChair(conf_id))
+        evaluate = [actor.isConferenceChair(conf_id), this_conference.isNewDateAfterCurrent(data)]
 
-        # if this conference does not exist / date before current date.
-        evaluate.append(this_conference.isNewDateAfterCurrent(data))
-
-        for evaluation in evaluate:
-            if evaluation is "Ok":
-                this_conference.updateDates(data)
-                messages.success(self.request, 'Deadlines postponed successfully!')
-                return super(PostponeDeadlines, self).form_valid(form)
-            else:
-                reactToFormAction(evaluation, self.request)
-                return self.render_to_response(self.get_context_data(form=form))
-
+        if evaluate.count("Ok") != len(evaluate):
+            for evaluation in evaluate:
+                if evaluation != "Ok":
+                    reactToFormAction(evaluation, self.request)
+                    return self.render_to_response(self.get_context_data(form=form))
+        else:
+            this_conference.updateDates(data)
+            messages.success(self.request, 'Deadlines postponed successfully!')
+            return super(PostponeDeadlines, self).form_valid(form)
 
 
 class SubmitProposal(FormView, Abstract):
@@ -104,13 +105,12 @@ class SubmitProposal(FormView, Abstract):
     form_class = forms.SubmitProposal
     success_url = reverse_lazy("conferences")
 
-
     def form_valid(self, form):
         data = form.cleaned_data
         conf_id = self.kwargs['conference_id']
         actor = models.loggedActor(self)
-        actors_conference = actor.conference_set.filter(id = conf_id).first()
-        this_conference = models.Conference.objects.filter(id = conf_id).first()
+        actors_conference = actor.conference_set.filter(id=conf_id).first()
+        this_conference = models.Conference.objects.filter(id=conf_id).first()
 
         correct = 0
         # if this conference does not exist.
@@ -124,8 +124,6 @@ class SubmitProposal(FormView, Abstract):
         # Or if we're beyond the time for submitting abstracts...
         if this_conference.abstract_date <= datetime.date.today():
             correct = 3
-
-
 
         if correct == 0:
             models.Submission(
@@ -147,6 +145,7 @@ class SubmitProposal(FormView, Abstract):
 
         return self.render_to_response(self.get_context_data(form=form))
 
+
 class EnrollPcMember(FormView, Abstract):
     template_name = "conferences/enroll-pcmember.html"
     form_class = forms.EnrollPcMember
@@ -156,8 +155,8 @@ class EnrollPcMember(FormView, Abstract):
         data = form.cleaned_data
         conf_id = self.kwargs['conference_id']
         actor = models.loggedActor(self)
-        actors_conference = actor.conference_set.filter(id = conf_id).first()
-        this_conference = models.Conference.objects.filter(id = conf_id).first()
+        actors_conference = actor.conference_set.filter(id=conf_id).first()
+        this_conference = models.Conference.objects.filter(id=conf_id).first()
 
         correct = 0
         # if this conference does not exist...
@@ -169,7 +168,7 @@ class EnrollPcMember(FormView, Abstract):
             correct = 2
 
         # if this user is already a pc member in this conference... then he can't submit
-        elif this_conference.pcmemberin_set.filter(actor_id = actor.id).first() is not None:
+        elif this_conference.pcmemberin_set.filter(actor_id=actor.id).first() is not None:
             correct = 3
 
         if correct == 0:
@@ -189,19 +188,21 @@ class EnrollPcMember(FormView, Abstract):
 
         return self.render_to_response(self.get_context_data(form=form))
 
+
 class Submissions(Abstract):
     template_name = "conferences/submissions.html"
 
     def get_context_data(self, **kwargs):
         context = super(Abstract, self).get_context_data(**kwargs)
-        context['submissions'] = models.Submission.objects.filter(conference_id = self.kwargs['conference_id'])
+        context['submissions'] = models.Submission.objects.filter(conference_id=self.kwargs['conference_id'])
         return context
+
 
 class SpecificSubmission(Abstract):
     template_name = "conferences/specific-submission.html"
 
     def dispatch(self, request, *args, **kwargs):
-        submission = models.Submission.objects.filter(id = self.kwargs['submission_id']).first()
+        submission = models.Submission.objects.filter(id=self.kwargs['submission_id']).first()
         actor = models.loggedActor(self)
 
         correct = 0
@@ -210,7 +211,7 @@ class SpecificSubmission(Abstract):
             correct = 1
 
         # if the actor isn't a pc member for this conference...
-        if actor.pcmemberin_set.filter(conference_id = submission.conference.id).first() is None:
+        if actor.pcmemberin_set.filter(conference_id=submission.conference.id).first() is None:
             correct = 2
 
         # if the actor is the author of this submission ( can happen if pc member submits proposal )
@@ -218,7 +219,6 @@ class SpecificSubmission(Abstract):
             correct = 3
 
         if correct == 0:
-            messages.success(self.request, 'You are allowed to see this page!')
             return render(request, SpecificSubmission.template_name, self.get_context_data(**kwargs))
         elif correct == 2:
             messages.error(self.request, 'You are not a PC member!')
@@ -230,7 +230,7 @@ class SpecificSubmission(Abstract):
     def get_context_data(self, **kwargs):
         context = super(Abstract, self).get_context_data(**kwargs)
 
-        submission = models.Submission.objects.get(pk = self.kwargs['submission_id'])
+        submission = models.Submission.objects.get(pk=self.kwargs['submission_id'])
         biddings = list(submission.bidding_set.all())
 
         for x in biddings:
@@ -246,6 +246,7 @@ class SpecificSubmission(Abstract):
         context['grades'] = grades
         return context
 
+
 class BidSubmission(FormView, Abstract):
     template_name = "conferences/bid-submission.html"
     form_class = forms.BidSubmission
@@ -256,34 +257,37 @@ class BidSubmission(FormView, Abstract):
         submission_id = self.kwargs['submission_id']
 
         actor = models.loggedActor(self)
-        this_submission = models.Submission.objects.filter(id = submission_id).first()
+        this_submission = models.Submission.objects.filter(id=submission_id).first()
 
-        # if this conference does not exist.
-        if this_submission is None:
-            return super().form_invalid(form)
+        evaluate = []
 
         this_conference = this_submission.conference
-        pcmemberin = this_conference.pcmemberin_set.filter(actor_id = actor.id).first()
+        pcmemberin = this_conference.pcmemberin_set.filter(actor_id=actor.id).first()
 
         # if this actor is not a pc member in this conference...
         if pcmemberin is None:
-            return super().form_invalid(form)
+            evaluate.append("actorNotPCMember")
 
-        # if this actor is the author of this submission
-        if this_submission.submitter.id == actor.id:
-            return super().form_invalid(form)
+        evaluate.append(this_submission.actorIsSubmissionAuthor(actor))
 
         # if this actor has already bid on this submission...
-        if models.SubmissionRemark.objects.filter(submission_id = this_submission.id).filter(pcmember_id = pcmemberin.id).first() is not None:
-            return super().form_invalid(form)
+        if models.Bidding.objects.filter(submission_id=this_submission.id).filter(
+                pcmember_id=pcmemberin.id).first() is not None:
+            evaluate.append("alreadyBid")
 
-        models.Bidding(
-            submission = this_submission,
-            pcmember = pcmemberin,
-            bid = data['bidding']
-        ).save()
-
-        return super().form_valid(form)
+        if evaluate.count("Ok") != len(evaluate):
+            for evaluation in evaluate:
+                if evaluation != "Ok":
+                    reactToFormAction(evaluation, self.request)
+                    return HttpResponseRedirect('/conferences/submissions/' + str(submission_id))
+        else:
+            models.Bidding(
+                submission=this_submission,
+                pcmember=this_conference.getPCMemberIn(actor),
+                bid=data['bidding']
+            ).save()
+            messages.success(self.request, 'Bid made successfully!')
+            return HttpResponseRedirect('/conferences/submissions/' + str(submission_id))
 
 
 class CommentSubmission(FormView, Abstract):
@@ -296,7 +300,7 @@ class CommentSubmission(FormView, Abstract):
         submission_id = self.kwargs['submission_id']
 
         actor = models.loggedActor(self)
-        this_submission = models.Submission.objects.filter(id = submission_id).first()
+        this_submission = models.Submission.objects.filter(id=submission_id).first()
 
         # if this conference does not exist.
         if this_submission is None:
@@ -307,19 +311,20 @@ class CommentSubmission(FormView, Abstract):
             return super().form_invalid(form)
 
         this_conference = this_submission.conference
-        pcmemberin = this_conference.pcmemberin_set.filter(actor_id = actor.id).first()
+        pcmemberin = this_conference.pcmemberin_set.filter(actor_id=actor.id).first()
 
         # if this actor is not a pc member in this conference...
         if pcmemberin is None:
             return super().form_invalid(form)
 
         models.SubmissionRemark(
-            submission = this_submission,
-            pcmember = pcmemberin,
-            content = data['remark']
+            submission=this_submission,
+            pcmember=pcmemberin,
+            content=data['remark']
         ).save()
 
         return super().form_valid(form)
+
 
 class PcMembersPanel(Abstract):
     template_name = "conferences/pc-members-panel.html"
@@ -327,7 +332,7 @@ class PcMembersPanel(Abstract):
     def dispatch(self, request, *args, **kwargs):
         actor = models.loggedActor(self)
         conf_id = self.kwargs['conference_id']
-        this_conference = models.Conference.objects.filter(id = conf_id).first()
+        this_conference = models.Conference.objects.filter(id=conf_id).first()
 
         correct = 0
         # if this conference does not exist.
@@ -355,7 +360,7 @@ class PcMembersPanel(Abstract):
 
         actor = models.loggedActor(self)
         conf_id = self.kwargs['conference_id']
-        this_conference = models.Conference.objects.filter(id = conf_id).first()
+        this_conference = models.Conference.objects.filter(id=conf_id).first()
 
         context['conf'] = this_conference
 
@@ -370,11 +375,12 @@ class PcMembersPanel(Abstract):
 
         return context
 
+
 class AssignPcMember(Abstract):
     def dispatch(self, request, *args, **kwargs):
         actor = models.loggedActor(self)
-        _submission = models.Submission.objects.filter( id = self.kwargs['submission_id'] ).first()
-        _pcmember = models.PcMemberIn.objects.filter(id = self.kwargs['pcmember_id']).first()
+        _submission = models.Submission.objects.filter(id=self.kwargs['submission_id']).first()
+        _pcmember = models.PcMemberIn.objects.filter(id=self.kwargs['pcmember_id']).first()
 
         # If the ids are bad.
         if _submission is None or _pcmember is None:
@@ -397,30 +403,32 @@ class AssignPcMember(Abstract):
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
         # if the pcmember has already been assigned for reviewing the submission...
-        if _pcmember.reviewassignment_set.filter(pcmember_id = _pcmember.id).filter(submission_id = _submission.id).first() is not None:
+        if _pcmember.reviewassignment_set.filter(pcmember_id=_pcmember.id).filter(
+                submission_id=_submission.id).first() is not None:
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
         models.ReviewAssignment(
-            submission = _submission,
-            pcmember = _pcmember,
-            grade = models.GradingValues.DEFAULT
+            submission=_submission,
+            pcmember=_pcmember,
+            grade=models.GradingValues.DEFAULT
         ).save()
 
         return HttpResponseRedirect(reverse_lazy("conferences"))
+
 
 class ReviewerBoard(Abstract):
     template_name = "conferences/reviewer-board.html"
 
     def dispatch(self, request, *args, **kwargs):
         actor = models.loggedActor(self)
-        conference = models.Conference.objects.filter(id = self.kwargs['conference_id']).first()
+        conference = models.Conference.objects.filter(id=self.kwargs['conference_id']).first()
 
         # if the conference does not exist
         if conference is None:
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
         # if the actor is not a pc member for the conference...
-        if actor.pcmemberin_set.filter(conference_id = conference.id).first() is None:
+        if actor.pcmemberin_set.filter(conference_id=conference.id).first() is None:
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
         return render(request, ReviewerBoard.template_name, self.get_context_data(**kwargs))
@@ -429,8 +437,8 @@ class ReviewerBoard(Abstract):
         context = super(Abstract, self).get_context_data(**kwargs)
 
         actor = models.loggedActor(self)
-        conference = models.Conference.objects.filter(id = self.kwargs['conference_id']).first()
-        pcmemberin = actor.pcmemberin_set.filter(conference_id = conference.id).first()
+        conference = models.Conference.objects.filter(id=self.kwargs['conference_id']).first()
+        pcmemberin = actor.pcmemberin_set.filter(conference_id=conference.id).first()
 
         assignments = pcmemberin.reviewassignment_set.all()
 
@@ -441,6 +449,7 @@ class ReviewerBoard(Abstract):
 
         return context
 
+
 class GradeSubmission(Abstract):
     def dispatch(self, request, *args, **kwargs):
         actor = models.loggedActor(self)
@@ -450,13 +459,13 @@ class GradeSubmission(Abstract):
         if grade_index < 1 or grade_index >= len(grades):
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
-        _submission = models.Submission.objects.filter( id = self.kwargs['submission_id'] ).first()
+        _submission = models.Submission.objects.filter(id=self.kwargs['submission_id']).first()
 
         # If the submission is bad.
         if _submission is None:
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
-        _pcmember = _submission.conference.pcmemberin_set.filter(actor_id = actor.id).first()
+        _pcmember = _submission.conference.pcmemberin_set.filter(actor_id=actor.id).first()
 
         # if the pcmember is bad...
         if _pcmember is None:
@@ -470,7 +479,7 @@ class GradeSubmission(Abstract):
         if _submission.submitter.id == _pcmember.actor.id:
             return HttpResponseRedirect(reverse_lazy("conferences"))
 
-        reviewAssignment = _pcmember.reviewassignment_set.filter(submission_id = _submission.id).first()
+        reviewAssignment = _pcmember.reviewassignment_set.filter(submission_id=_submission.id).first()
         # if this pc member has not been assigned this submssion...
         if reviewAssignment is None:
             return HttpResponseRedirect(reverse_lazy("conferences"))
@@ -480,10 +489,11 @@ class GradeSubmission(Abstract):
 
         return HttpResponseRedirect(reverse_lazy("conferences"))
 
+
 class Evaluation(Abstract):
     def dispatch(self, request, *args, **kwargs):
         actor = models.loggedActor(self)
-        conference = models.Conference.objects.filter( id = self.kwargs['conference_id'] ).first()
+        conference = models.Conference.objects.filter(id=self.kwargs['conference_id']).first()
 
         # if there's no such conference...
         if conference is None:
@@ -505,26 +515,27 @@ class Evaluation(Abstract):
 
         for s in submissions:
             finalGrade = int(sum(list(map(lambda x: x.grade, list(s.reviewassignment_set.all())))))
-            models.EvaluationResult(submission = s, grade = finalGrade).save()
+            models.EvaluationResult(submission=s, grade=finalGrade).save()
 
         conference.evaluated = True
         conference.save()
 
         return HttpResponseRedirect(reverse_lazy("conferences"))
 
+
 class EvaluationResult(Abstract):
     template_name = "conferences/evaluation-result.html"
 
     def dispatch(self, request, *args, **kwargs):
         actor = models.loggedActor(self)
-        conference = models.Conference.objects.filter(id = self.kwargs['conference_id']).first()
+        conference = models.Conference.objects.filter(id=self.kwargs['conference_id']).first()
 
         correct = 0
         # if submission doesn't exist...
         if conference is None:
             correct = 1
 
-        if actor.pcmemberin_set.filter(conference_id = conference.id).first() is None:
+        if actor.pcmemberin_set.filter(conference_id=conference.id).first() is None:
             correct = 2
 
         if correct == 0:
@@ -539,7 +550,7 @@ class EvaluationResult(Abstract):
 
     def get_context_data(self, **kwargs):
         context = super(Abstract, self).get_context_data(**kwargs)
-        conference = models.Conference.objects.filter(id = self.kwargs['conference_id']).first()
+        conference = models.Conference.objects.filter(id=self.kwargs['conference_id']).first()
 
         if conference.evaluated:
             evaluations = list(map(lambda x: x.evaluationresult, conference.submission_set.all()))

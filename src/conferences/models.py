@@ -92,6 +92,14 @@ class Conference(models.Model):
 
         self.save()
 
+    def actorIsPCMember(self, actor):
+        if self.pcmemberin_set.filter(actor_id=actor.id).first() is None:
+            return "notPCMember"
+        return "Ok"
+
+    def getPCMemberIn(self, actor):
+        return self.pcmemberin_set.filter(actor_id=actor.id).first()
+
 # this is to automatically add the chair as a pc member
 # makes things easier down the road.
 @receiver(post_save, sender=Conference)
@@ -107,6 +115,13 @@ class Submission(models.Model):
     meta_info = models.CharField(max_length=10000, null=True)
     submitter = models.ForeignKey(Actor, on_delete = models.CASCADE)
     conference = models.ForeignKey(Conference, on_delete = models.CASCADE)
+
+    def actorIsSubmissionAuthor(self, actor):
+        if self is None:
+            return "doesNotExist"
+        if self.submitter.id == actor.id:
+            return "actorIsSubmissionAuthor"
+        return "Ok"
 
 class BiddingValues:
     DEFAULT = 1
