@@ -1,13 +1,15 @@
 {% extends "base.html" %}
 
+{% load staticfiles %}
 {% load crispy_forms_tags %}
 
-{% block navbar %}
+{% block navbar-left %}
+{% include "_navbar.html" with active_link="home" %}
 {% endblock %}
 
 {% block container %}
 <div class="container form-box">
-  <div class="text-center">
+  <div class="text-center" style="margin-top: 80px;">
     <h2>{% block form_heading %}{% endblock %}</h2>
   </div>
   {% block form %}
