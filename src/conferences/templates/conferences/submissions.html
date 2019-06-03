@@ -3,7 +3,7 @@
 {% load staticfiles %}
 {% load crispy_forms_tags %}
 
-{% block title %}{{ block.super }}Conferences{% endblock %}
+{% block title %}{{ block.super }}Submissions{% endblock %}
 
 {% block navbar-left %}
 {% include "_navbar.html" with active_link="home" %}
@@ -19,9 +19,6 @@
         <div class="row">
             <div class="col-md-8 col-sm-8">
                 <h1>{% include "_brandname.html" %}</h1>
-            </div>
-            <div class="col-md-4 col-sm-4">
-                <li><a href="{% url 'add-conference' %}"> Add a conference</a></li>
             </div>
         </div>
     </div>

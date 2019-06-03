@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ block.super }}Conference Panel{% endblock %}
+
+{% block navbar-left %}
+{% include "_navbar.html" with active_link="home" %}
+{% endblock %}
+
+{% block navbar-right %}
+{{ block.super }}
+{% endblock %}
+
+{% block splash %}
+<div class="jumbotron">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-sm-8">
+                <h1>{% include "_brandname.html" %}</h1>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock splash %}
+
+{% block container %}
+<div align="center">
+    <button class="button btn btn-primary"> Add tags to conference </button>
+</div>
+<hr/>
+<div align="center">
+    <button class="button btn btn-primary"> Select a co-chair </button>
+</div>
+<hr/>
+<div align="center">
+    <button class="button btn btn-primary"> Assign papers to reviewers </button>
+</div>
+{% endblock container %}
+
+{% block scripts %}
+<script src="{% static 'site/js/site.js' %}"></script>
+{% endblock scripts %}

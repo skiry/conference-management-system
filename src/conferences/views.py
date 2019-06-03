@@ -198,6 +198,13 @@ class Submissions(Abstract):
         context['submissions'] = models.Submission.objects.filter(conference_id=self.kwargs['conference_id'])
         return context
 
+class ConferencePanel(Abstract):
+    template_name = "conferences/conference-panel.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(Abstract, self).get_context_data(**kwargs)
+        #context['submissions'] = models.Submission.objects.filter(conference_id=self.kwargs['conference_id'])
+        return context
 
 class UpdateSubmission(FormView, Abstract):
     template_name = "conferences/update-submission.html"

@@ -18,4 +18,5 @@ urlpatterns = [
     path("submissions/<int:submission_id>/grade/<int:grade_index>", views.GradeSubmission.as_view(), name="grade-submission"),
     path("<int:conference_id>/evaluation-result", views.EvaluationResult.as_view(), name='evaluation-result'),
     path("<int:conference_id>/evaluate", views.Evaluation.as_view(), name='evaluate'),
+    path("<int:conference_id>/conference-panel", views.ConferencePanel.as_view(), name='conference-panel'),
 ]

@@ -55,7 +55,7 @@
         {% for conf in conferences %}
         <tr class="even">
                 {% if conf.chairedBy.id == actor.id %}
-                <td>{{ conf.name }}</td>
+                <td><i><a href="{% url 'conference-panel' conf.id %}">{{ conf.name }}</a></i></td>
                 {% else %}
                 <td><a href="{% url 'submit-proposal' conf.id %}"> {{ conf.name }} </a></td>
                 {% endif %}
