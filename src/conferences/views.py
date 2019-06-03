@@ -147,6 +147,25 @@ class SubmitProposal(FormView, Abstract):
         return self.render_to_response(self.get_context_data(form=form))
 
 
+class CreateSection(FormView, Abstract):
+    template_name = "conferences/create-section.html"
+    form_class = forms.CreateSection
+    success_url = reverse_lazy("conferences")
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+
+        if not models.Section.alreadyExists(data['section_name']):
+            models.Section(
+                name=data['section_name']
+            ).save()
+            messages.success(self.request, 'You have successfully added this section!')
+            return super(CreateSection, self).form_valid(form)
+        else:
+            messages.error(self.request, 'Section already exists')
+
+        return self.render_to_response(self.get_context_data(form=form))
+
 class EnrollPcMember(FormView, Abstract):
     template_name = "conferences/enroll-pcmember.html"
     form_class = forms.EnrollPcMember

@@ -27,6 +27,12 @@ def _post_save_user_handler(sender, **kwargs):
 class Section(models.Model):
     name = models.CharField(max_length=128)
 
+    @staticmethod
+    def alreadyExists(sectionName):
+        if Section.objects.filter(name=sectionName).exists():
+            return True
+        return False
+
 
 class Conference(models.Model):
     name = models.CharField(max_length=255, unique=True)

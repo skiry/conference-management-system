@@ -71,6 +71,18 @@ class SubmitProposal(forms.Form):
             Submit("submit_proposal", "Submit your proposal", css_class="btn btn-lg btn-primary btn-block")
         )
 
+class CreateSection(forms.Form):
+    section_name = forms.CharField(max_length = 128)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            Field("section_name", placeholder = "Category Name"),
+            Submit("submit_proposal", "Add the section", css_class="btn btn-lg btn-primary btn-block")
+        )
+
 
 class UpdateSubmission(forms.Form):
     title = forms.CharField(max_length=128)
