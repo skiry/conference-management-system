@@ -24,6 +24,10 @@ def _post_save_user_handler(sender, **kwargs):
     Actor(user=kwargs['instance']).save() if kwargs['created'] else None
 
 
+class Section(models.Model):
+    name = models.CharField(max_length=128)
+
+
 class Conference(models.Model):
     name = models.CharField(max_length=255, unique=True)
     website = models.CharField(max_length=255, unique=True)
@@ -38,6 +42,8 @@ class Conference(models.Model):
 
     chairedBy = models.ForeignKey(Actor, on_delete=models.CASCADE)
     evaluated = models.BooleanField(default=False)
+
+    sections = models.ManyToManyField(Section)
 
     def isNewDateAfterCurrent(self, data):
         if self is None:
@@ -127,6 +133,8 @@ class Submission(models.Model):
     meta_info = models.CharField(max_length=10000, null=True)
     submitter = models.ForeignKey(Actor, on_delete=models.CASCADE)
     conference = models.ForeignKey(Conference, on_delete=models.CASCADE)
+
+    chosen_section = models.ForeignKey(Section, on_delete=models.DO_NOTHING)
 
     def actorIsSubmissionAuthor(self, actor):
         if self is None:
