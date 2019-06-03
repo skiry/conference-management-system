@@ -19,7 +19,7 @@ def reactToFormAction(evaluate, request):
     elif evaluate == "dateBefore":
         messages.error(request, 'You time-traveller...')
     elif evaluate == "doesNotExist":
-        messages.error(request, 'This conference does not exist!')
+        messages.error(request, 'This required item does not exist!')
     elif evaluate == "checkDates":
         messages.error(request, 'Make sure the conference ends after it starts and the abstract\'s '
                                 'deadline if before the full paper\'s deadline !')
@@ -27,6 +27,8 @@ def reactToFormAction(evaluate, request):
         messages.error(request, 'Make sure your website is correct ( http://www.[].[]!')
     elif evaluate == "alreadyBid":
         messages.error(request, 'You already have done a bid to this submission!')
+    elif evaluate == "alreadyExists":
+        messages.error(request, 'Item is already added!')
     else:
         messages.error(request, 'Some error occured!')
 
@@ -177,17 +179,20 @@ class AddSectionToConference(FormView, Abstract):
         conf_id = self.kwargs['conference_id']
         this_conference = models.Conference.objects.filter(id=conf_id).first()
         section_name = data['section_name']
+        actor = models.loggedActor(self)
 
-        if models.Section.alreadyExists(section_name):
-            if not this_conference.hasSection(section_name):
-                this_conference.sections.add(models.Section.objects.get(name=section_name))
-                messages.success(self.request, 'You have successfully added this tag to your conference!')
-                return super(AddSectionToConference, self).form_valid(form)
-            else:
-                messages.error(self.request, 'Section already added to the conference!')
+        evaluate = [this_conference.isChairedBy(actor), models.Section.exists(section_name),
+                    this_conference.hasSection(section_name)]
+
+        if evaluate.count("Ok") != len(evaluate):
+            for evaluation in evaluate:
+                if evaluation != "Ok":
+                    reactToFormAction(evaluation, self.request)
+                    return self.render_to_response(self.get_context_data(form=form))
         else:
-            messages.error(self.request, 'Section does not exist!')
-        return self.render_to_response(self.get_context_data(form=form))
+            this_conference.sections.add(models.Section.objects.get(name=section_name))
+            messages.success(self.request, 'You have successfully added this tag to your conference!')
+            return super(AddSectionToConference, self).form_valid(form)
 
 
 class EnrollPcMember(FormView, Abstract):

@@ -30,9 +30,14 @@ class Section(models.Model):
     @staticmethod
     def alreadyExists(sectionName):
         if Section.objects.filter(name=sectionName).exists():
-            return True
-        return False
+            return "alreadyExists"
+        return "Ok"
 
+    @staticmethod
+    def exists(sectionName):
+        if Section.objects.filter(name=sectionName).exists():
+            return "Ok"
+        return "doesNotExist"
 
 class Conference(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -53,8 +58,8 @@ class Conference(models.Model):
 
     def hasSection(self, section):
         if self.sections.filter(name=section):
-            return True
-        return False
+            return "alreadyExists"
+        return "Ok"
 
     def isNewDateAfterCurrent(self, data):
         if self is None:
