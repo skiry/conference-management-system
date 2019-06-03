@@ -166,6 +166,30 @@ class CreateSection(FormView, Abstract):
 
         return self.render_to_response(self.get_context_data(form=form))
 
+
+class AddSectionToConference(FormView, Abstract):
+    template_name = "conferences/add-section-conference.html"
+    form_class = forms.AddSectionToConference
+    success_url = reverse_lazy("conferences")
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        conf_id = self.kwargs['conference_id']
+        this_conference = models.Conference.objects.filter(id=conf_id).first()
+        section_name = data['section_name']
+
+        if models.Section.alreadyExists(section_name):
+            if not this_conference.hasSection(section_name):
+                this_conference.sections.add(models.Section.objects.get(name=section_name))
+                messages.success(self.request, 'You have successfully added this tag to your conference!')
+                return super(AddSectionToConference, self).form_valid(form)
+            else:
+                messages.error(self.request, 'Section already added to the conference!')
+        else:
+            messages.error(self.request, 'Section does not exist!')
+        return self.render_to_response(self.get_context_data(form=form))
+
+
 class EnrollPcMember(FormView, Abstract):
     template_name = "conferences/enroll-pcmember.html"
     form_class = forms.EnrollPcMember
@@ -217,13 +241,15 @@ class Submissions(Abstract):
         context['submissions'] = models.Submission.objects.filter(conference_id=self.kwargs['conference_id'])
         return context
 
+
 class ConferencePanel(Abstract):
     template_name = "conferences/conference-panel.html"
 
     def get_context_data(self, **kwargs):
         context = super(Abstract, self).get_context_data(**kwargs)
-        #context['submissions'] = models.Submission.objects.filter(conference_id=self.kwargs['conference_id'])
+        context['conf'] = models.Conference.objects.filter(id=self.kwargs['conference_id'])[0]
         return context
+
 
 class UpdateSubmission(FormView, Abstract):
     template_name = "conferences/update-submission.html"
@@ -471,8 +497,6 @@ class ReviewerBoard(Abstract):
         else:
             reactToFormAction(evaluate, request)
             return HttpResponseRedirect(reverse_lazy("conferences"))
-
-
 
     def get_context_data(self, **kwargs):
         context = super(Abstract, self).get_context_data(**kwargs)

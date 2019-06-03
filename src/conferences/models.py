@@ -51,6 +51,11 @@ class Conference(models.Model):
 
     sections = models.ManyToManyField(Section)
 
+    def hasSection(self, section):
+        if self.sections.filter(name=section):
+            return True
+        return False
+
     def isNewDateAfterCurrent(self, data):
         if self is None:
             return "doesNotExist"

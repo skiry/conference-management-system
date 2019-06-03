@@ -27,7 +27,9 @@
 
 {% block container %}
 <div align="center">
-    <button class="button btn btn-primary"> Add tags to conference </button>
+    <a href="{% url 'add-section-conference' conf.id %}">
+        <button class="button btn btn-primary"> Add tags to conference </button>
+    </a>
 </div>
 <hr/>
 <div align="center">

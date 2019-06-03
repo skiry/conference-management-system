@@ -20,4 +20,5 @@ urlpatterns = [
     path("<int:conference_id>/evaluation-result", views.EvaluationResult.as_view(), name='evaluation-result'),
     path("<int:conference_id>/evaluate", views.Evaluation.as_view(), name='evaluate'),
     path("<int:conference_id>/conference-panel", views.ConferencePanel.as_view(), name='conference-panel'),
+    path("<int:conference_id>/add-section-conference", views.AddSectionToConference.as_view(), name='add-section-conference'),
 ]
