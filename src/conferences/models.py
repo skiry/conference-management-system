@@ -54,7 +54,7 @@ class Conference(models.Model):
     chairedBy = models.ForeignKey(Actor, on_delete=models.CASCADE)
     evaluated = models.BooleanField(default=False)
 
-    sections = models.ManyToManyField(Section)
+    sections = models.ManyToManyField(Section, null=True)
 
     def hasSection(self, section):
         if self.sections.filter(name=section):
@@ -150,7 +150,8 @@ class Submission(models.Model):
     submitter = models.ForeignKey(Actor, on_delete=models.CASCADE)
     conference = models.ForeignKey(Conference, on_delete=models.CASCADE)
 
-    chosen_section = models.ForeignKey(Section, on_delete=models.DO_NOTHING)
+    chosen_section = models.ForeignKey(Section, on_delete=models.DO_NOTHING, null=True)
+    result = models.BooleanField(default=False)
 
     def actorIsSubmissionAuthor(self, actor):
         if self is None:

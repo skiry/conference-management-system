@@ -244,6 +244,8 @@ class Submissions(Abstract):
     def get_context_data(self, **kwargs):
         context = super(Abstract, self).get_context_data(**kwargs)
         context['submissions'] = models.Submission.objects.filter(conference_id=self.kwargs['conference_id'])
+        context['conf'] = models.Conference.objects.filter(id=self.kwargs['conference_id'])[0]
+        context['today'] = datetime.date.today
         return context
 
 

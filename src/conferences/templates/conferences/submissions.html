@@ -26,7 +26,12 @@
 {% endblock splash %}
 
 {% block container %}
-<div class="col-md-4 col-sm-4">
+{% if today > conf.bidding_date %}
+    <div class="col-md-6 col-sm-6">
+{% else %}
+    <div class="col-md-4 col-sm-4">
+{% endif %}
+
     <table class="table table-hover">
         <tr>
             <th>Title</th>
@@ -35,6 +40,9 @@
             <th>Full Paper </th>
             <th>Author </th>
             <th>See biddings and remarks </th>
+            {% if today > conf.bidding_date %}
+            <th>Result</th>
+            {% endif %}
         </tr>
         {% for submission in submissions %}
         <tr>
@@ -44,12 +52,19 @@
             <td>{{ submission.full_paper }}</td>
             <td>{{ submission.submitter.user.name }}</td>
             <td><a href="{% url 'specific-submission' submission.id %}"> See biddings and remarks </a></td>
+             {% if today > conf.bidding_date %}
+                {% if submission.result == True %}
+                    <td>&#9989;</td>
+                {% else %}
+                    <td>&#10060;</td>
+                {% endif %}
+            {% endif %}
         </tr>
         {% endfor %}
     </table>
 </div>
 {% endblock container %}
-
+]
 {% block scripts %}
 <script src="{% static 'site/js/site.js' %}"></script>
 {% endblock scripts %}
