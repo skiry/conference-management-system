@@ -41,6 +41,7 @@
                 <th>Start Date </th>
                 <th>Abstract Deadline </th>
                 <th>Submission Deadline </th>
+                <th>Bidding Deadline </th>
                 <th>Presentation Deadline </th>
                 <th>End Date </th>
                 <th>Enroll As PC Member </th>
@@ -63,6 +64,7 @@
                 <td>{{ conf.start_date }}</td>
                 <td>{{ conf.abstract_date }}</td>
                 <td>{{ conf.submission_date }}</td>
+                <td>{{ conf.bidding_date }}</td>
                 <td>{{ conf.presentation_date }}</td>
                 <td>{{ conf.end_date }}</td>
                 <td><a href="{% url 'enroll-pcmember' conf.id %}"> Enroll As PC Member </a></td>

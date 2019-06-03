@@ -60,6 +60,7 @@ class AddConference(FormView, Abstract):
             start_date=data['start_date'],
             abstract_date=data['abstract_date'],
             submission_date=data['submission_date'],
+            bidding_date=data['bidding_date'],
             presentation_date=data['presentation_date'],
             end_date=data['end_date'],
             chairedBy=models.loggedActor(self)

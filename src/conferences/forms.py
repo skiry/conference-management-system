@@ -13,6 +13,7 @@ class AddConference(forms.Form):
     start_date = forms.DateField()
     abstract_date = forms.DateField()
     submission_date = forms.DateField()
+    bidding_date = forms.DateField()
     presentation_date = forms.DateField()
     end_date = forms.DateField()
 
@@ -27,6 +28,7 @@ class AddConference(forms.Form):
             Field("start_date", placeholder="Starting Date"),
             Field("abstract_date", placeholder="Abstract Deadline Date"),
             Field("submission_date", placeholder="Submission Deadline Date"),
+            Field("bidding_date", placeholder="Bidding Deadline Date"),
             Field("presentation_date", placeholder="Presentation Deadline Date"),
             Field("end_date", placeholder = "Ending Date"),
             Submit("create_conference", "Create new conference", css_class="btn btn-lg btn-primary btn-block"),
