@@ -144,8 +144,8 @@ def _post_save_conference_handler(sender, **kwargs):
 
 class Submission(models.Model):
     title = models.CharField(max_length=128)
-    abstract = models.CharField(max_length=2550)
-    full_paper = models.CharField(max_length=25500, null=True)
+    abstract = models.FileField(upload_to='abstracts')
+    full_paper = models.FileField(upload_to='full-papers', null=True)
     meta_info = models.CharField(max_length=10000, null=True)
     submitter = models.ForeignKey(Actor, on_delete=models.CASCADE)
     conference = models.ForeignKey(Conference, on_delete=models.CASCADE)

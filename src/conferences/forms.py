@@ -57,8 +57,8 @@ class PostponeDeadlines(forms.Form):
 
 class SubmitProposal(forms.Form):
     title = forms.CharField(max_length=128)
-    abstract = forms.CharField(max_length=2550)
-    full_paper = forms.CharField(max_length=25500, required=False)
+    abstract = forms.FileField()
+    full_paper = forms.FileField(required=False)
     meta_info = forms.CharField(max_length=10000, required=False)
 
     def __init__(self, *args, **kwargs):
@@ -102,8 +102,8 @@ class AddSectionToConference(forms.Form):
 
 class UpdateSubmission(forms.Form):
     title = forms.CharField(max_length=128)
-    abstract = forms.CharField(max_length=2550)
-    full_paper = forms.CharField(max_length=25500, required=False)
+    abstract = forms.FileField()
+    full_paper = forms.FileField(required=False)
     meta_info = forms.CharField(max_length=10000, required=False)
 
     def __init__(self, *args, **kwargs):
