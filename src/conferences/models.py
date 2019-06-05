@@ -226,6 +226,12 @@ class Bidding(models.Model):
             if self.bid == x[0]:
                 return x[1]
 
+    @staticmethod
+    def getBidByMember(submission, member, biddings):
+        res = list(filter(lambda bid: bid.submission == submission and bid.pcmember == member, biddings))
+        if res:
+            return res[0].getBid()
+        return BiddingValues.N
 
 class SubmissionRemark(models.Model):
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)

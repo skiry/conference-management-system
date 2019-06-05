@@ -443,7 +443,7 @@ class PcMembersPanel(Abstract):
         members = this_conference.pcmemberin_set.all()
 
         for member in members:
-            member.opinions = list(map(lambda x: {'id': x.id, 'value': member.biddingValueFor(x.id)}, submissions))
+            member.opinions = list(map(lambda x: {'id': x.id, 'value': models.Bidding.getBidByMember(x, member, models.Bidding.objects.all())}, submissions))
 
         context['submissions'] = submissions
         context['members'] = members
