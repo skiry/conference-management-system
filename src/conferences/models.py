@@ -160,6 +160,20 @@ class Submission(models.Model):
             return "actorIsSubmissionAuthor"
         return "Ok"
 
+    def actorIsNotChair(self, actor):
+        if self is None:
+            return "doesNotExist"
+        if self.conference.chairedBy.id != actor.id:
+            return "actorIsNotConferenceChair"
+        return "Ok"
+
+    def isChairOfConference(self, member):
+        if self is None:
+            return "doesNotExist"
+        if self.conference.chairedBy.id == member.actor.id:
+            return "chairOfConference"
+        return "Ok"
+
     def updateInfo(self, data):
         self.title = data['title']
         self.abstract = data['abstract']
@@ -215,6 +229,20 @@ class PcMemberIn(models.Model):
 
         return bid.getBid()
 
+    def isMemberOfConference(self, conference):
+        if self is None:
+            return "doesNotExist"
+        if self.conference != conference:
+            return "notMemberOfConference"
+        return "Ok"
+
+    def alreadyAssigned(self, pcMemberId, submissionId):
+        if self is None:
+            return "doesNotExist"
+        if self.reviewassignment_set.filter(pcmember_id=pcMemberId).filter(
+            submission_id=submissionId).first() is not None:
+            return "alreadyAssigned"
+        return "Ok"
 
 class Bidding(models.Model):
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)

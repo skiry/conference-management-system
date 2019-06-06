@@ -29,6 +29,18 @@ def reactToFormAction(evaluate, request):
         messages.error(request, 'You already have done a bid to this submission!')
     elif evaluate == "alreadyExists":
         messages.error(request, 'Item is already added!')
+    elif evaluate == "actorIsNotConferenceChair":
+        messages.error(request, "The currently logged user is not the chair where the submission was made...")
+    elif evaluate == "actorIsSubmissionAuthor":
+        messages.error(request, "The actor is the submission's author.")
+    elif evaluate == "notMemberOfConference":
+        messages.error(request, "This is not a PC member of this conference.")
+    elif evaluate == "chairOfConference":
+        messages.error(request, "The member is the chair of the conference.")
+    elif evaluate == "alreadyAssigned":
+        messages.error(request, "The member has already been assigned to review this paper.")
+    elif evaluate == "refusedToEvaluate":
+        messages.error(request, "You should respect his decision of not voting this paper.")
     else:
         messages.error(request, 'Some error occured!')
 
@@ -424,7 +436,6 @@ class PcMembersPanel(Abstract):
         evaluate = this_conference.isChairedBy(actor)
 
         if evaluate == "Ok":
-            messages.success(self.request, 'Permission OK!')
             return render(request, PcMembersPanel.template_name, self.get_context_data(**kwargs))
         else:
             reactToFormAction(evaluate, request)
@@ -438,12 +449,14 @@ class PcMembersPanel(Abstract):
         this_conference = models.Conference.objects.filter(id=conf_id).first()
 
         context['conf'] = this_conference
+        context['today'] = datetime.date.today()
 
         submissions = this_conference.submission_set.all()
         members = this_conference.pcmemberin_set.all()
 
         for member in members:
-            member.opinions = list(map(lambda x: {'id': x.id, 'value': models.Bidding.getBidByMember(x, member, models.Bidding.objects.all())}, submissions))
+            member.opinions = list(map(lambda x: {'id': x.id, 'value':
+                models.Bidding.getBidByMember(x, member, models.Bidding.objects.all())}, submissions))
 
         context['submissions'] = submissions
         context['members'] = members
@@ -457,38 +470,29 @@ class AssignPcMember(Abstract):
         _submission = models.Submission.objects.filter(id=self.kwargs['submission_id']).first()
         _pcmember = models.PcMemberIn.objects.filter(id=self.kwargs['pcmember_id']).first()
 
-        # If the ids are bad.
-        if _submission is None or _pcmember is None:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
+        evaluate = [_submission.actorIsSubmissionAuthor(actor),
+                    _submission.actorIsNotChair(actor),
+                    _submission.isChairOfConference(_pcmember),
+                    _pcmember.isMemberOfConference(_submission.conference),
+                    _pcmember.alreadyAssigned(_pcmember.id, _submission.id)]
 
-        # if the pcmember is the chair
-        if _pcmember.conference.chairedBy.id == _pcmember.actor.id:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
+        value = models.Bidding.getBidByMember(_submission, _pcmember, models.Bidding.objects.all())
+        if value == models.BiddingValues.R:
+            evaluate.append("refusedToEvaluate")
 
-        # if the currently logged user is not the chair where the submission was made...
-        if _submission.conference.chairedBy.id != actor.id:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
-
-        # if the pcmember submitter this paper
-        if _submission.submitter.id == _pcmember.actor.id:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
-
-        # if the pcmember is not a member in this conference...
-        if _pcmember.conference.id != _submission.conference.id:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
-
-        # if the pcmember has already been assigned for reviewing the submission...
-        if _pcmember.reviewassignment_set.filter(pcmember_id=_pcmember.id).filter(
-                submission_id=_submission.id).first() is not None:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
-
-        models.ReviewAssignment(
-            submission=_submission,
-            pcmember=_pcmember,
-            grade=models.GradingValues.DEFAULT
-        ).save()
-
-        return HttpResponseRedirect(reverse_lazy("conferences"))
+        if evaluate.count("Ok") != len(evaluate):
+            for evaluation in evaluate:
+                if evaluation != "Ok":
+                    reactToFormAction(evaluation, self.request)
+                    return HttpResponseRedirect('/conferences/' + str(_submission.conference.id) + '/pc-members')
+        else:
+            models.ReviewAssignment(
+                submission=_submission,
+                pcmember=_pcmember,
+                grade=models.GradingValues.DEFAULT
+            ).save()
+            messages.success(self.request, 'Reviewer assigned successfully!')
+            return HttpResponseRedirect('/conferences/' + str(_submission.conference.id) + '/pc-members')
 
 
 class ReviewerBoard(Abstract):

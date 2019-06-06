@@ -44,7 +44,10 @@
             <td>{{ member.description }}</td>
             <td>{{ member.actor.user.email }}</td>
             {% for opinion in member.opinions %}
-            <td><a href="{% url 'assign-reviewer' opinion.id member.id %}">
+            <td>
+            {% if conf.bidding_date < today %}
+                <a href="{% url 'assign-reviewer' opinion.id member.id %}">
+            {% endif %}
                 {{ opinion.value }}
             </a></td>
             {% endfor %}
