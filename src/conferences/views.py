@@ -41,6 +41,12 @@ def reactToFormAction(evaluate, request):
         messages.error(request, "The member has already been assigned to review this paper.")
     elif evaluate == "refusedToEvaluate":
         messages.error(request, "You should respect his decision of not voting this paper.")
+    elif evaluate == "notAssigned":
+        messages.error(request, "You have not been assigned to review this paper.")
+    elif evaluate == "chairOfConference":
+        messages.error(request, "The chair of the conference cannot do this.")
+    elif evaluate == "wrongMark":
+        messages.error(request, "You cannot assign this grade.")
     else:
         messages.error(request, 'Some error occured!')
 
@@ -335,7 +341,7 @@ class SpecificSubmission(Abstract):
 
     def get_context_data(self, **kwargs):
         context = super(Abstract, self).get_context_data(**kwargs)
-
+        actor = models.loggedActor(self)
         submission = models.Submission.objects.get(pk=self.kwargs['submission_id'])
         biddings = list(submission.bidding_set.all())
 
@@ -350,6 +356,8 @@ class SpecificSubmission(Abstract):
         context['biddings'] = biddings
         context['remarks'] = list(submission.submissionremark_set.all())
         context['grades'] = grades
+        context['actor'] = actor
+
         return context
 
 
@@ -502,7 +510,7 @@ class ReviewerBoard(Abstract):
         actor = models.loggedActor(self)
         conference = models.Conference.objects.filter(id=self.kwargs['conference_id']).first()
 
-        evaluate = conference.isChairedBy(actor)
+        evaluate = conference.actorIsPCMember(actor)
         if evaluate == "Ok":
             return render(request, ReviewerBoard.template_name, self.get_context_data(**kwargs))
         else:
@@ -532,38 +540,33 @@ class GradeSubmission(Abstract):
         grades = models.GradingValues.CHOICES
         grade_index = self.kwargs['grade_index']
 
+        evaluate = []
         if grade_index < 1 or grade_index >= len(grades):
-            return HttpResponseRedirect(reverse_lazy("conferences"))
+            evaluate.append("wrongMark")
 
         _submission = models.Submission.objects.filter(id=self.kwargs['submission_id']).first()
 
-        # If the submission is bad.
-        if _submission is None:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
-
         _pcmember = _submission.conference.pcmemberin_set.filter(actor_id=actor.id).first()
 
-        # if the pcmember is bad...
-        if _pcmember is None:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
-
-        # if this pcmember is the chair
-        if _pcmember.conference.chairedBy.id == _pcmember.actor.id:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
-
-        # if this pcmember submitter this proposal
-        if _submission.submitter.id == _pcmember.actor.id:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
+        evaluate.append(_pcmember.isChair())
+        evaluate.append(_submission.actorIsSubmissionAuthor(_pcmember.actor))
 
         reviewAssignment = _pcmember.reviewassignment_set.filter(submission_id=_submission.id).first()
-        # if this pc member has not been assigned this submssion...
+        
         if reviewAssignment is None:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
+            evaluate.append("notAssigned")
 
-        reviewAssignment.grade = grade_index
-        reviewAssignment.save()
+        if evaluate.count("Ok") != len(evaluate):
+            for evaluation in evaluate:
+                if evaluation != "Ok":
+                    reactToFormAction(evaluation, self.request)
+                    return HttpResponseRedirect('/conferences/' + str(_submission.conference.id) + '/reviewer-board')
+        else:
+            reviewAssignment.grade = grade_index
+            reviewAssignment.save()
+            messages.success(self.request, 'Grade assigned successfully!')
 
-        return HttpResponseRedirect(reverse_lazy("conferences"))
+        return HttpResponseRedirect('/conferences/' + str(_submission.conference.id) + '/reviewer-board')
 
 
 class Evaluation(Abstract):

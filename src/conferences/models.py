@@ -39,6 +39,7 @@ class Section(models.Model):
             return "Ok"
         return "doesNotExist"
 
+
 class Conference(models.Model):
     name = models.CharField(max_length=255, unique=True)
     website = models.CharField(max_length=255, unique=True)
@@ -240,9 +241,17 @@ class PcMemberIn(models.Model):
         if self is None:
             return "doesNotExist"
         if self.reviewassignment_set.filter(pcmember_id=pcMemberId).filter(
-            submission_id=submissionId).first() is not None:
+                submission_id=submissionId).first() is not None:
             return "alreadyAssigned"
         return "Ok"
+
+    def isChair(self):
+        if self is None:
+            return "doesNotExist"
+        if self.conference.chairedBy.id == self.actor.id:
+            return "chairOfConference"
+        return "Ok"
+
 
 class Bidding(models.Model):
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
@@ -260,6 +269,7 @@ class Bidding(models.Model):
         if res:
             return res[0].getBid()
         return BiddingValues.N
+
 
 class SubmissionRemark(models.Model):
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)

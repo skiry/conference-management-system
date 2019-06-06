@@ -56,7 +56,16 @@
         {% for bidding in biddings %}
         <tr>
             <td>{{ bidding.pcmember.actor.user.name }}</td>
-            <td>{{ bidding.bid }}</td>
+            <td>
+                {% if bidding.pcmember.actor.id == actor.id%}
+                <a href="{% url 'reviewer-board' bidding.submission.conference.id %}">
+                    {{ bidding.bid }}
+                </a>
+                {% else %}
+                    {{ bidding.bid }}
+                {% endif %}
+
+            </td>
         </tr>
         {% endfor %}
     </table>
