@@ -34,7 +34,7 @@
             <th>General Information </th>
             <th>Full Paper </th>
             <th>Author </th>
-            <th>REGISTER !!!</th>
+            <th>Details and registration </th>
         </tr>
         {% for submission in submissions %}
             {% if submission.result == True %}
@@ -44,7 +44,7 @@
                     <td>{{ submission.meta_info }}</td>
                     <td>{{ submission.full_paper }}</td>
                     <td>{{ submission.submitter.user.name }}</td>
-                    <td><a href="{% url 'specific-submission' submission.id %}"> Apply </a></td>
+                    <td><a href="{% url 'submission-details' submission.id %}"> Here </a></td>
                 </tr>
             {% endif %}
         {% endfor %}

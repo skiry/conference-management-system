@@ -4,7 +4,6 @@ from . import views
 urlpatterns = [
     path("", views.HomePage.as_view(), name="conferences"),
     path("add/", views.AddConference.as_view(), name='add-conference'),
-    path("join  /", views.AddConference.as_view(), name='add-conference'),
     path("create-section", views.CreateSection.as_view(), name='create-section'),
     path("<int:conference_id>/postpone", views.PostponeDeadlines.as_view(), name='postpone-deadlines'),
     path("<int:conference_id>/propose", views.SubmitProposal.as_view(), name='submit-proposal'),
@@ -24,5 +23,7 @@ urlpatterns = [
     path("<int:conference_id>/conference-panel", views.ConferencePanel.as_view(), name='conference-panel'),
     path("<int:conference_id>/add-section-conference", views.AddSectionToConference.as_view(), name='add-section-conference'),
     path("<int:conference_id>/assign-section", views.AssignSection.as_view(), name="assign-section"),
-    path("/submissions/<int:submission_id>/section-assignment", views.SectionAssignment.as_view(), name="section-assignment")
+    path("submissions/<int:submission_id>/section-assignment", views.SectionAssignment.as_view(), name="section-assignment"),
+    path("submissions/<int:submission_id>/submission-details", views.SubmissionDetails.as_view(), name="submission-details"),
+    path("submissions/<int:submission_id>/join", views.JoinPaper.as_view(), name="join-paper")
 ]

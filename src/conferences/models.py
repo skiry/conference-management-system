@@ -26,6 +26,7 @@ def _post_save_user_handler(sender, **kwargs):
 
 class Section(models.Model):
     name = models.CharField(max_length=128)
+    session_chair = models.ForeignKey(Actor, on_delete=models.CASCADE, null=True)
 
     @staticmethod
     def alreadyExists(sectionName):
@@ -43,6 +44,7 @@ class Section(models.Model):
         for section in sections:
             if section.name == name:
                 return section
+
 
 class Conference(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -206,6 +208,17 @@ class Submission(models.Model):
                     return "notAllGraded"
         return "Ok"
 
+
+class Participants(models.Model):
+    paper = models.ForeignKey(Submission, on_delete=models.CASCADE)
+    actor = models.ForeignKey(Actor, on_delete=models.CASCADE)
+
+    @staticmethod
+    def alreadyRegistered(participants, actor):
+        for x in participants:
+            if x.actor == actor:
+                return "alreadyRegistered"
+        return "Ok"
 
 class BiddingValues:
     DEFAULT = 1

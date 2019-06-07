@@ -169,3 +169,20 @@ class SectionAssignment(forms.Form):
             Field("section_name", placeholder="Add a section for this submission"),
             Submit("add_section", "Add the section to this submission", css_class="btn btn-lg btn-primary btn-block")
         )
+
+
+class JoinPaper(forms.Form):
+    agreement = forms.CharField(max_length=128, disabled=True, required=False)
+    payment = forms.CharField(max_length=128, disabled=True, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            Field("agreement",
+                  placeholder="Do you agree with Terms and Conditions?"),
+            Field("payment",
+                  placeholder="You will pay the fee at the entrance!"),
+            Submit("add_section", "Yes! Confirm Registration!", css_class="btn btn-lg btn-primary btn-block")
+        )

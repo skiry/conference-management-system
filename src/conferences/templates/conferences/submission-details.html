@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ block.super }}{{ submission.title}} details{% endblock %}
+
+{% block navbar-left %}
+{% include "_navbar.html" with active_link="home" %}
+{% endblock %}
+
+{% block navbar-right %}
+{{ block.super }}
+{% endblock %}
+
+{% block splash %}
+<div class="jumbotron">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-sm-8">
+                <h1>{% include "_brandname.html" %}</h1>
+            </div>
+        </div>
+    </div>
+</div>
+    <div style="text-align: center">
+    <a style="text-decoration: none" href="{% url 'join-paper' submission.id %}">
+        <button class="btn btn-primary btn-warning">Register for this paper</button>
+    </a>
+    <hr/>
+</div>
+{% endblock splash %}
+
+{% block container %}
+    <div class="col-md-4 col-sm-4">
+    <h2>Participants</h2>
+    <table class="table table-hover">
+        <tr>
+            <th>Name </th>
+            <th>Role </th>
+        </tr>
+        <tr>
+            <td>{{ submission.submitter.user.name }}</td>
+            <td>Author - Speaker</td>
+        </tr>
+        {% if submission.chosen_section.session_chair is not None %}
+            <td>{{ submission.chosen_section.session_chair.user.name }}</td>
+            <td>Session Chair</td>
+        {% endif %}
+        {% for participant in participants %}
+            <tr>
+                <td>{{ participant.actor.user.name }}</td>
+                <td>Participant - Listener</td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock container %}
+]
+{% block scripts %}
+<script src="{% static 'site/js/site.js' %}"></script>
+{% endblock scripts %}

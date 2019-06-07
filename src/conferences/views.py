@@ -55,6 +55,8 @@ def reactToFormAction(evaluate, request):
         messages.error(request, "You are not a PC member!")
     elif evaluate == "hasSection":
         messages.error(request, "This submission is already in a section!")
+    elif evaluate == "alreadyRegistered":
+        messages.error(request, "You already attend this paper!")
     else:
         messages.error(request, 'Some error occured!')
 
@@ -719,3 +721,44 @@ class ConferenceSubmissions(Abstract):
         context['submissions'] = models.Submission.objects.filter(conference_id=self.kwargs['conference_id'])
         context['conf'] = models.Conference.objects.filter(id=self.kwargs['conference_id'])[0]
         return context
+
+
+class SubmissionDetails(Abstract):
+    template_name = "conferences/submission-details.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(Abstract, self).get_context_data(**kwargs)
+        context['submission'] = models.Submission.objects.filter(id=self.kwargs['submission_id']).first()
+        context['participants'] = models.Participants.objects.filter(paper=context['submission'])
+        print(context['submission'].submitter.user.name)
+        print(context['participants'])
+        print(context['submission'].chosen_section.session_chair)
+
+        return context
+
+
+class JoinPaper(FormView, Abstract):
+    template_name = "conferences/join-paper.html"
+    form_class = forms.JoinPaper
+    success_url = reverse_lazy("conferences")
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        currentUser = models.loggedActor(self)
+
+        evaluate = models.Participants.alreadyRegistered(models.Participants.objects.all(), models.loggedActor(self))
+        submission = models.Submission.objects.filter(id=self.kwargs['submission_id']).first()
+
+        if submission.submitter.id == currentUser.id and evaluate == "Ok":
+            evaluate = "alreadyRegistered"
+
+        if evaluate == "Ok":
+            models.Participants(
+                paper=submission,
+                actor=currentUser
+            ).save()
+            messages.success(self.request, 'You have successfully registered for the paper!')
+            return HttpResponseRedirect('/conferences/submissions/' + str(submission.conference.id) + '/submission-details')
+        else:
+            reactToFormAction(evaluate, self.request)
+            return HttpResponseRedirect('/conferences/submissions/' + str(submission.conference.id) + '/submission-details')
