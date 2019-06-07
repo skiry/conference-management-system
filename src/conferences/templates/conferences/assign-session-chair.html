@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ block.super }}Assign session chair for sections {% endblock %}
+
+{% block navbar-left %}
+{% include "_navbar.html" with active_link="home" %}
+{% endblock %}
+
+{% block navbar-right %}
+{{ block.super }}
+{% endblock %}
+
+{% block splash %}
+<div class="jumbotron">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-sm-8">
+                <h1>{% include "_brandname.html" %}</h1>
+            </div>
+        </div>
+    </div>
+</div>
+    <div style="text-align: center">
+    <a style="text-decoration: none" href="{% url 'session-chair-assignment' %}">
+        <button class="btn btn-primary btn-warning">Assign session chair</button>
+    </a>
+</div>
+{% endblock splash %}
+{% block container %}
+<div class="col-md-4 col-sm-4">
+    <h2>Sections</h2>
+    <table class="table table-hover">
+        <tr>
+            <th>Name </th>
+        </tr>
+        {% for section in sections %}
+        <tr>
+            <td>{{ section.name }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <hr/>
+    <h2>PC Members</h2>
+<table class="table table-hover">
+    <tr>
+        <th>Name</th>
+        <th>Email</th>
+    </tr>
+    {% for member in members %}
+    <tr>
+        <td>{{ member.actor.user.name }}</td>
+        <td>{{ member.actor.user.email }}</td>
+    </tr>
+    {% endfor %}
+</table>
+</div>
+{% endblock container %}
+
+{% block scripts %}
+<script src="{% static 'site/js/site.js' %}"></script>
+{% endblock scripts %}

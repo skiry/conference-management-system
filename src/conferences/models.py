@@ -220,6 +220,7 @@ class Participants(models.Model):
                 return "alreadyRegistered"
         return "Ok"
 
+
 class BiddingValues:
     DEFAULT = 1
     E = 'Want to Evaluate'
@@ -288,6 +289,22 @@ class PcMemberIn(models.Model):
         if self.conference.chairedBy.id == self.actor.id:
             return "chairOfConference"
         return "Ok"
+
+    @staticmethod
+    def userExists(pcmembers, name):
+        ok = 0
+        for x in pcmembers:
+            if x.actor.user.name == name:
+                ok = 1
+        if ok == 1:
+            return "Ok"
+        return "userDoesNotExist"
+
+    @staticmethod
+    def getUser(users, name):
+        for user in users:
+            if user.actor.user.name == name:
+                return user
 
 
 class Bidding(models.Model):

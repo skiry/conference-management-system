@@ -186,3 +186,18 @@ class JoinPaper(forms.Form):
                   placeholder="You will pay the fee at the entrance!"),
             Submit("add_section", "Yes! Confirm Registration!", css_class="btn btn-lg btn-primary btn-block")
         )
+
+
+class SessionChairAssignment(forms.Form):
+    section_name = forms.CharField(max_length=128)
+    pc_member_name = forms.CharField(max_length=128)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            Field("section_name", placeholder="Section's name"),
+            Field("pc_member_name", placeholder="User's name"),
+            Submit("add_section", "Assign PC member as session chair", css_class="btn btn-lg btn-primary btn-block")
+        )

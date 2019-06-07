@@ -57,6 +57,8 @@ def reactToFormAction(evaluate, request):
         messages.error(request, "This submission is already in a section!")
     elif evaluate == "alreadyRegistered":
         messages.error(request, "You already attend this paper!")
+    elif evaluate == "userDoesNotExist":
+        messages.error(request, "The user does not exist!")
     else:
         messages.error(request, 'Some error occured!')
 
@@ -730,9 +732,6 @@ class SubmissionDetails(Abstract):
         context = super(Abstract, self).get_context_data(**kwargs)
         context['submission'] = models.Submission.objects.filter(id=self.kwargs['submission_id']).first()
         context['participants'] = models.Participants.objects.filter(paper=context['submission'])
-        print(context['submission'].submitter.user.name)
-        print(context['participants'])
-        print(context['submission'].chosen_section.session_chair)
 
         return context
 
@@ -749,7 +748,9 @@ class JoinPaper(FormView, Abstract):
         evaluate = models.Participants.alreadyRegistered(models.Participants.objects.all(), models.loggedActor(self))
         submission = models.Submission.objects.filter(id=self.kwargs['submission_id']).first()
 
-        if submission.submitter.id == currentUser.id and evaluate == "Ok":
+        if submission.submitter.id == currentUser.id or (
+                submission.chosen_section.session_chair is not None and
+                submission.chosen_section.session_chair.id == currentUser.id):
             evaluate = "alreadyRegistered"
 
         if evaluate == "Ok":
@@ -758,7 +759,53 @@ class JoinPaper(FormView, Abstract):
                 actor=currentUser
             ).save()
             messages.success(self.request, 'You have successfully registered for the paper!')
-            return HttpResponseRedirect('/conferences/submissions/' + str(submission.conference.id) + '/submission-details')
+            return HttpResponseRedirect(
+                '/conferences/submissions/' + str(submission.conference.id) + '/submission-details')
         else:
             reactToFormAction(evaluate, self.request)
-            return HttpResponseRedirect('/conferences/submissions/' + str(submission.conference.id) + '/submission-details')
+            return HttpResponseRedirect(
+                '/conferences/submissions/' + str(submission.conference.id) + '/submission-details')
+
+
+class AssignSession(Abstract):
+    template_name = "conferences/assign-session-chair.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        return render(request, AssignSession.template_name, self.get_context_data(**kwargs))
+
+    def get_context_data(self, **kwargs):
+        context = super(Abstract, self).get_context_data(**kwargs)
+
+        context['sections'] = models.Section.objects.all()
+        context['conferences'] = models.Conference.objects.all()
+        context['members'] = models.PcMemberIn.objects.all()
+
+        return context
+
+
+class SessionChairAssignment(FormView, Abstract):
+    template_name = "conferences/session-chair-assignment.html"
+    form_class = forms.SessionChairAssignment
+    success_url = reverse_lazy("conferences")
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+
+        section_name = data['section_name']
+        user_name = data['pc_member_name']
+
+        evaluate = [models.Section.exists(section_name),
+                    models.PcMemberIn.userExists(models.PcMemberIn.objects.all(), user_name)]
+
+        if evaluate.count("Ok") != len(evaluate):
+            for evaluation in evaluate:
+                if evaluation != "Ok":
+                    reactToFormAction(evaluation, self.request)
+                    return HttpResponseRedirect('assign-session-chair')
+        else:
+            section = models.Section.getSection(models.Section.objects.all(), section_name)
+            section.session_chair = models.PcMemberIn.getUser(models.PcMemberIn.objects.all(), user_name).actor
+            section.save()
+            messages.success(self.request, "Session chair assigned successfully!")
+            return HttpResponseRedirect('assign-session-chair')
+
