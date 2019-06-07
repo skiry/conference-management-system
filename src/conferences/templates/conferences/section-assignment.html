@@ -1,0 +1,12 @@
+{% extends "conferences/form_base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}{{ block.super }}Add section to paper{% endblock %}
+
+{% block form_heading %}Here you can add a section to a paper{% endblock %}
+
+{% block form %}
+  {% crispy form %}
+{% endblock form %}
+

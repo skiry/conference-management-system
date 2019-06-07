@@ -32,12 +32,22 @@
             <th>Title </th>
             <th>Author Name </th>
             <th>Final Grade </th>
+            {% if chair %}
+            <th>Assign section </th>
+            {% endif %}
         </tr>
         {% for evaluation in evaluations %}
         <tr>
             <td>{{ evaluation.submission.title }}</td>
             <td>{{ evaluation.submission.submitter.user.name }}</td>
             <td>{{ evaluation.grade }}</td>
+            {% if chair %}
+                <td>
+                    <a href="{% url 'assign-section' conf.id %}">
+                        Assign section
+                    </a>
+                </td>
+            {% endif %}
         </tr>
         {% endfor %}
     </table>

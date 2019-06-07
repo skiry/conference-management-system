@@ -156,3 +156,16 @@ class CommentSubmission(forms.Form):
             Field("remark", placeholder="What do you have to add?"),
             Submit("submit_remark", "Submit your remark", css_class="btn btn-lg btn-primary btn-block")
         )
+
+
+class SectionAssignment(forms.Form):
+    section_name = forms.CharField(max_length=128)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.layout = Layout(
+            Field("section_name", placeholder="Add a section for this submission"),
+            Submit("add_section", "Add the section to this submission", css_class="btn btn-lg btn-primary btn-block")
+        )

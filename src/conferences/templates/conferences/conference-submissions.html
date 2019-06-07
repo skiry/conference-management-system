@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ block.super }}Papers{% endblock %}
+
+{% block navbar-left %}
+{% include "_navbar.html" with active_link="home" %}
+{% endblock %}
+
+{% block navbar-right %}
+{{ block.super }}
+{% endblock %}
+
+{% block splash %}
+<div class="jumbotron">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-sm-8">
+                <h1>{% include "_brandname.html" %}</h1>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock splash %}
+
+{% block container %}
+    <div class="col-md-6 col-sm-6">
+    <table class="table table-hover">
+        <tr>
+            <th>Title</th>
+            <th>Abstract </th>
+            <th>General Information </th>
+            <th>Full Paper </th>
+            <th>Author </th>
+            <th>REGISTER !!!</th>
+        </tr>
+        {% for submission in submissions %}
+            {% if submission.result == True %}
+                <tr>
+                    <td>{{ submission.title }}</td>
+                    <td>{{ submission.abstract }}</td>
+                    <td>{{ submission.meta_info }}</td>
+                    <td>{{ submission.full_paper }}</td>
+                    <td>{{ submission.submitter.user.name }}</td>
+                    <td><a href="{% url 'specific-submission' submission.id %}"> Apply </a></td>
+                </tr>
+            {% endif %}
+        {% endfor %}
+    </table>
+</div>
+{% endblock container %}
+]
+{% block scripts %}
+<script src="{% static 'site/js/site.js' %}"></script>
+{% endblock scripts %}

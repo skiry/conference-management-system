@@ -39,6 +39,10 @@ class Section(models.Model):
             return "Ok"
         return "doesNotExist"
 
+    def getSection(sections, name):
+        for section in sections:
+            if section.name == name:
+                return section
 
 class Conference(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -188,6 +192,11 @@ class Submission(models.Model):
         self.full_paper = data['full_paper']
         self.meta_info = data['meta_info']
         self.save()
+
+    def hasSection(self):
+        if self.chosen_section is not None:
+            return "hasSection"
+        return "Ok"
 
     @staticmethod
     def allSubmissionsGraded(submissions, result):

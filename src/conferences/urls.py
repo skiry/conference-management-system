@@ -4,11 +4,13 @@ from . import views
 urlpatterns = [
     path("", views.HomePage.as_view(), name="conferences"),
     path("add/", views.AddConference.as_view(), name='add-conference'),
+    path("join  /", views.AddConference.as_view(), name='add-conference'),
     path("create-section", views.CreateSection.as_view(), name='create-section'),
     path("<int:conference_id>/postpone", views.PostponeDeadlines.as_view(), name='postpone-deadlines'),
     path("<int:conference_id>/propose", views.SubmitProposal.as_view(), name='submit-proposal'),
     path("<int:conference_id>/enroll", views.EnrollPcMember.as_view(), name='enroll-pcmember'),
     path("<int:conference_id>/submissions", views.Submissions.as_view(), name='submissions'),
+    path("<int:conference_id>/conference-submissions", views.ConferenceSubmissions.as_view(), name='user-submissions-panel'),
     path("submissions/<int:submission_id>", views.SpecificSubmission.as_view(), name='specific-submission'),
     path("submissions/<int:submission_id>/updateSubmission", views.UpdateSubmission.as_view(), name='update-submission'),
     path("submissions/<int:submission_id>/bid", views.BidSubmission.as_view(), name='bid-submission'),
@@ -21,4 +23,6 @@ urlpatterns = [
     path("<int:conference_id>/evaluate", views.Evaluation.as_view(), name='evaluate'),
     path("<int:conference_id>/conference-panel", views.ConferencePanel.as_view(), name='conference-panel'),
     path("<int:conference_id>/add-section-conference", views.AddSectionToConference.as_view(), name='add-section-conference'),
+    path("<int:conference_id>/assign-section", views.AssignSection.as_view(), name="assign-section"),
+    path("/submissions/<int:submission_id>/section-assignment", views.SectionAssignment.as_view(), name="section-assignment")
 ]

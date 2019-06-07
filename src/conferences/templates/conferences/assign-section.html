@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ block.super }}Assign section for submissions {% endblock %}
+
+{% block navbar-left %}
+{% include "_navbar.html" with active_link="home" %}
+{% endblock %}
+
+{% block navbar-right %}
+{{ block.super }}
+{% endblock %}
+
+{% block splash %}
+<div class="jumbotron">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-sm-8">
+                <h1>{% include "_brandname.html" %}</h1>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock splash %}
+{% block container %}
+<div class="col-md-4 col-sm-4">
+    <h2>Sections</h2>
+    <table class="table table-hover">
+        <tr>
+            <th>Name </th>
+        </tr>
+        {% for section in sections %}
+        <tr>
+            <td>{{ section.name }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <hr/>
+    <h2>Papers</h2>
+<table class="table table-hover">
+    <tr>
+        <th>Title</th>
+        <th>General Information </th>
+        <th>Author </th>
+        <th>Section </th>
+    </tr>
+    {% for submission in submissions %}
+    <tr>
+        <td><a href="{% url 'section-assignment' submission.id %}">{{ submission.title }}</a></td>
+        <td>{{ submission.meta_info }}</td>
+        <td>{{ submission.submitter.user.name }}</td>
+        <td>{{ submission.chosen_section.name }}</td>
+    </tr>
+    {% endfor %}
+</table>
+</div>
+{% endblock container %}
+
+{% block scripts %}
+<script src="{% static 'site/js/site.js' %}"></script>
+{% endblock scripts %}

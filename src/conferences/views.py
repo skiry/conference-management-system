@@ -53,6 +53,8 @@ def reactToFormAction(evaluate, request):
         messages.error(request, "Not all submissions have been evaluated!")
     elif evaluate == "notPCMember":
         messages.error(request, "You are not a PC member!")
+    elif evaluate == "hasSection":
+        messages.error(request, "This submission is already in a section!")
     else:
         messages.error(request, 'Some error occured!')
 
@@ -181,7 +183,7 @@ class CreateSection(FormView, Abstract):
     def form_valid(self, form):
         data = form.cleaned_data
 
-        if not models.Section.alreadyExists(data['section_name']):
+        if models.Section.alreadyExists(data['section_name']) == "Ok":
             models.Section(
                 name=data['section_name']
             ).save()
@@ -644,8 +646,76 @@ class EvaluationResult(Abstract):
                 x.grade = x.getGrade()
 
             context['evaluations'] = evaluations
+            if conference.isChairedBy(models.loggedActor(self)) == "Ok":
+                context['chair'] = True
+            context['conf'] = conference
         else:
             context['error'] = True
             context['evaluations'] = []
 
+        return context
+
+
+class AssignSection(Abstract):
+    template_name = "conferences/assign-section.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        actor = models.loggedActor(self)
+        conf_id = self.kwargs['conference_id']
+        this_conference = models.Conference.objects.filter(id=conf_id).first()
+
+        evaluate = this_conference.isChairedBy(actor)
+
+        if evaluate == "Ok":
+            return render(request, AssignSection.template_name, self.get_context_data(**kwargs))
+        else:
+            reactToFormAction(evaluate, request)
+        return HttpResponseRedirect(reverse_lazy("conferences"))
+
+    def get_context_data(self, **kwargs):
+        context = super(Abstract, self).get_context_data(**kwargs)
+
+        conf_id = self.kwargs['conference_id']
+        this_conference = models.Conference.objects.filter(id=conf_id).first()
+
+        context['conf'] = this_conference
+
+        submissions = this_conference.submission_set.all()
+
+        context['submissions'] = submissions
+        context['sections'] = models.Section.objects.all()
+
+        return context
+
+
+class SectionAssignment(FormView, Abstract):
+    template_name = "conferences/section-assignment.html"
+    form_class = forms.SectionAssignment
+    success_url = reverse_lazy("conferences")
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        submission = models.Submission.objects.filter(id=self.kwargs['submission_id']).first()
+
+        evaluate = [models.Section.exists(data['section_name']), submission.hasSection()]
+
+        if evaluate.count("Ok") != len(evaluate):
+            for evaluation in evaluate:
+                if evaluation != "Ok":
+                    reactToFormAction(evaluation, self.request)
+                    return self.render_to_response(self.get_context_data(form=form))
+        else:
+            submission.chosen_section = models.Section.getSection(models.Section.objects.all(), data['section_name'])
+            submission.save()
+            messages.success(self.request, 'You have successfully assigned the section to this conference!')
+            return super(SectionAssignment, self).form_valid(form)
+
+
+class ConferenceSubmissions(Abstract):
+    template_name = "conferences/conference-submissions.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(Abstract, self).get_context_data(**kwargs)
+        context['submissions'] = models.Submission.objects.filter(conference_id=self.kwargs['conference_id'])
+        context['conf'] = models.Conference.objects.filter(id=self.kwargs['conference_id'])[0]
         return context
