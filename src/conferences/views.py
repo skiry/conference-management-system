@@ -47,6 +47,12 @@ def reactToFormAction(evaluate, request):
         messages.error(request, "The chair of the conference cannot do this.")
     elif evaluate == "wrongMark":
         messages.error(request, "You cannot assign this grade.")
+    elif evaluate == "alreadyEvaluated":
+        messages.error(request, "This conference has already been evaluated.")
+    elif evaluate == "notAllGraded":
+        messages.error(request, "Not all submissions have been evaluated!")
+    elif evaluate == "notPCMember":
+        messages.error(request, "You are not a PC member!")
     else:
         messages.error(request, 'Some error occured!')
 
@@ -552,7 +558,12 @@ class GradeSubmission(Abstract):
         evaluate.append(_submission.actorIsSubmissionAuthor(_pcmember.actor))
 
         reviewAssignment = _pcmember.reviewassignment_set.filter(submission_id=_submission.id).first()
-        
+
+        if reviewAssignment.grade == models.GradingValues.DEFAULT:
+            before = None
+        else:
+            before = reviewAssignment.grade
+
         if reviewAssignment is None:
             evaluate.append("notAssigned")
 
@@ -564,8 +575,12 @@ class GradeSubmission(Abstract):
         else:
             reviewAssignment.grade = grade_index
             reviewAssignment.save()
-            messages.success(self.request, 'Grade assigned successfully!')
-
+            if before is None:
+                messages.success(self.request, 'Grade assigned successfully!')
+            else:
+                messages.success(self.request, 'You have successfully modified your grade from '
+                                 + models.GradingValues.CHOICES[before][1] + ' to '
+                                 + models.GradingValues.CHOICES[grade_index][1])
         return HttpResponseRedirect('/conferences/' + str(_submission.conference.id) + '/reviewer-board')
 
 
@@ -573,31 +588,30 @@ class Evaluation(Abstract):
     def dispatch(self, request, *args, **kwargs):
         actor = models.loggedActor(self)
         conference = models.Conference.objects.filter(id=self.kwargs['conference_id']).first()
-
-        # if there's no such conference...
-        if conference is None:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
-
-        # if the current user isn't the chair...
-        if conference.chairedBy.id != actor.id:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
-
-        # if the conference was already evaluated...
-        if conference.evaluated:
-            return HttpResponseRedirect(reverse_lazy("conferences"))
-
         submissions = conference.submission_set.all()
-        for submission in submissions:
-            for review in submission.reviewassignment_set.all():
-                if review.grade == models.GradingValues.DEFAULT:
+
+        evaluate = [conference.isChairedBy(actor), conference.isEvaluated(),
+                    models.Submission.allSubmissionsGraded(submissions, models.GradingValues.DEFAULT)]
+
+        if evaluate.count("Ok") != len(evaluate):
+            for evaluation in evaluate:
+                if evaluation != "Ok":
+                    reactToFormAction(evaluation, self.request)
                     return HttpResponseRedirect(reverse_lazy("conferences"))
-
-        for s in submissions:
-            finalGrade = int(sum(list(map(lambda x: x.grade, list(s.reviewassignment_set.all())))))
-            models.EvaluationResult(submission=s, grade=finalGrade).save()
-
-        conference.evaluated = True
-        conference.save()
+        else:
+            for s in submissions:
+                grades = list(map(lambda x: x.grade, list(s.reviewassignment_set.all())))
+                finalGrade = sum(grades) / float(len(grades))
+                if int(finalGrade) <= models.GradingValues.CHOICES[4][0]:
+                    # i.e., borderline
+                    s.result = True
+                else:
+                    s.result = False
+                s.save()
+                models.EvaluationResult(submission=s, grade=finalGrade).save()
+            conference.evaluated = True
+            conference.save()
+            messages.success(self.request, 'Evaluation period ended successfully!')
 
         return HttpResponseRedirect(reverse_lazy("conferences"))
 
@@ -609,21 +623,13 @@ class EvaluationResult(Abstract):
         actor = models.loggedActor(self)
         conference = models.Conference.objects.filter(id=self.kwargs['conference_id']).first()
 
-        correct = 0
-        # if submission doesn't exist...
-        if conference is None:
-            correct = 1
+        evaluate = conference.actorIsPCMember(actor)
 
-        if actor.pcmemberin_set.filter(conference_id=conference.id).first() is None:
-            correct = 2
-
-        if correct == 0:
+        if evaluate == "Ok":
             messages.success(self.request, 'Permission OK!')
             return render(request, EvaluationResult.template_name, self.get_context_data(**kwargs))
-        elif correct == 1:
-            messages.error(self.request, 'The conference does not exist!')
-        elif correct == 2:
-            messages.error(self.request, 'You are not a PC member!')
+        else:
+            reactToFormAction(evaluate, request)
 
         return HttpResponseRedirect(reverse_lazy("conferences"))
 

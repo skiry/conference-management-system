@@ -119,6 +119,8 @@ class Conference(models.Model):
         self.save()
 
     def actorIsPCMember(self, actor):
+        if self is None:
+            return "doesNotExist"
         if self.pcmemberin_set.filter(actor_id=actor.id).first() is None:
             return "notPCMember"
         return "Ok"
@@ -131,6 +133,11 @@ class Conference(models.Model):
             return "doesNotExist"
         if self.chairedBy.id != actor.id:
             return "notConferenceChair"
+        return "Ok"
+
+    def isEvaluated(self):
+        if self.evaluated:
+            return "alreadyEvaluated"
         return "Ok"
 
 
@@ -181,6 +188,14 @@ class Submission(models.Model):
         self.full_paper = data['full_paper']
         self.meta_info = data['meta_info']
         self.save()
+
+    @staticmethod
+    def allSubmissionsGraded(submissions, result):
+        for submission in submissions:
+            for review in submission.reviewassignment_set.all():
+                if review.grade == result:
+                    return "notAllGraded"
+        return "Ok"
 
 
 class BiddingValues:
