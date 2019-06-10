@@ -1,4 +1,8 @@
-# ISS Last Hope
+# Conference Management System
+
+Group project realized at Software Engineering in a team with another 2 members.
+
+*How to run project
 
 `cd` into `src/` and do:
 
